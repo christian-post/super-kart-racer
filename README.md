@@ -11,7 +11,7 @@
 * Choose a kart and track, confirm with ENTER
 * Control the kart with WASD
 
-![Screenshot](screenshots\screenshot_003.png "Screenshot1")
+![Screenshot](github\screenshot_003.png "Screenshot1")
 
 
 ## Credits: 
