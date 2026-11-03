@@ -67,6 +67,8 @@ turbo_speed_factor = 1.4
 turbo_duration = 2.0
 oil_speed_factor = 0.5
 oil_duration = 2.0
+oil_lifetime = 20.0
+oil_world_width = 32
 
 [Debug]
 font_size = 16

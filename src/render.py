@@ -29,6 +29,7 @@ class Mode7:
         
         # Convert source image to numpy array once
         self.image_array = pg.surfarray.array3d(self.image)
+        self.decals = []  # (image, map rect), images stamped into image_array after the fact
 
         # tile drawn outside the map (top left map tile by default)
         course = self.game.course
@@ -40,6 +41,29 @@ class Mode7:
         self.near = 16.0
         self.far = 40.0
         self.fov_half = pi / 4
+
+
+    def add_decal(self, image, center):
+        decal = (image, image.get_rect(center=center))
+        self.decals.append(decal)
+        self.redraw_floor_area(decal[1])
+        return decal
+
+
+    def remove_decal(self, decal):
+        self.decals.remove(decal)
+        self.redraw_floor_area(decal[1])
+
+
+    def redraw_floor_area(self, area):
+        # self.image stays clean, so overlapping decals restore correctly
+        area = area.clip(self.rect)
+        if area.width == 0 or area.height == 0:
+            return
+        patch = self.image.subsurface(area).copy()
+        for decal_image, decal_rect in self.decals:
+            patch.blit(decal_image, decal_rect.move(-area.x, -area.y))
+        self.image_array[area.x:area.right, area.y:area.bottom] = pg.surfarray.array3d(patch)
 
 
     def kart_ground_distance(self):

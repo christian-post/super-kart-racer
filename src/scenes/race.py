@@ -7,7 +7,7 @@ from src.scenes.scene import Scene
 from src.render import Mode7
 from src.camera import Camera, FollowMode, OrbitMode
 from src.course import Course
-from src.sprites import Player, TrafficLight, Billboard, PathFollower, Kart
+from src.sprites import Player, TrafficLight, Billboard, PathFollower, Kart, OilSpill
 from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
 import src.utils as utils
@@ -124,7 +124,7 @@ class Race(Scene):
         elif event.key == pg.K_t:  # debug: turbo
             self.player.apply_effect("turbo")
         elif event.key == pg.K_y:  # debug: oil
-            self.player.apply_effect("oil")
+            OilSpill(self.game, self.player)
         elif event.key == pg.K_c:  # debug: toggle camera mode
             if isinstance(self.camera.mode, OrbitMode):
                 self.camera.set_mode(FollowMode())

@@ -6,6 +6,9 @@ features:
 - items
 - show an icon when an enemy is directly behind you
 
+bugs:
+- finish screen can't handle showing more than 4 lap times
+
 refactor:
 - 
 
