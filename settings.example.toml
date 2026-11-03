@@ -63,6 +63,10 @@ ai_speed_interval_min = 1.0
 ai_speed_interval_max = 3.0
 ai_speed_smoothing = 1.5 
 player_start_pos = 4
+turbo_speed_factor = 1.4
+turbo_duration = 2.0
+oil_speed_factor = 0.5
+oil_duration = 2.0
 
 [Debug]
 font_size = 16

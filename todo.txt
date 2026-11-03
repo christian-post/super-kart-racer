@@ -1,6 +1,10 @@
 - framerate-independent game speed
 - replace the finish line with multiple sprites (side by side)
+- animate the player's wheels
 
+features:
+- items
+- show an icon when an enemy is directly behind you
 
 refactor:
 - 

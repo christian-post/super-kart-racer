@@ -120,6 +120,11 @@ class Race(Scene):
             self.game.switch_scene("CourseSelect")
         elif event.key == pg.K_RETURN and self.phase == RacePhase.FINISHED:
             self.game.switch_scene("CourseSelect")
+        # Debug functions
+        elif event.key == pg.K_t:  # debug: turbo
+            self.player.apply_effect("turbo")
+        elif event.key == pg.K_y:  # debug: oil
+            self.player.apply_effect("oil")
         elif event.key == pg.K_c:  # debug: toggle camera mode
             if isinstance(self.camera.mode, OrbitMode):
                 self.camera.set_mode(FollowMode())

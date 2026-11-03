@@ -34,7 +34,6 @@ class Billboard(pg.sprite.Sprite):
     base_images = {}  # name -> surface
     scaled_images = {}  # (name, width) -> surface
 
-
     def __init__(self, game, tiled_object):
         super().__init__(game.billboards)
         self.game = game
@@ -114,6 +113,25 @@ class Billboard(pg.sprite.Sprite):
 
 class Kart(Billboard):
     # billboard using a kart sheet, needs angle, steer_yaw and map_pos
+    def apply_effect(self, effect_name):
+        duration = self.game.config[f"Gameplay.{effect_name}_duration"]
+        self.effect_timers[effect_name] = duration
+
+
+    def update_effects(self, dt):
+        for effect_name in list(self.effect_timers):
+            self.effect_timers[effect_name] -= dt
+            if self.effect_timers[effect_name] <= 0:
+                del self.effect_timers[effect_name]
+
+
+    @property
+    def speed_factor(self):
+        factor = 1.0
+        for effect_name in self.effect_timers:
+            factor *= self.game.config[f"Gameplay.{effect_name}_speed_factor"]
+        return factor
+
 
     def set_sheet(self, kart_name):
         self.images = self.game.assets["spritesheets"][kart_name]
@@ -151,6 +169,7 @@ class PathFollower(Kart):
         pg.sprite.Sprite.__init__(self, game.billboards)
         self.game = game
         self.name = kart_name
+        self.effect_timers = {}  # effect name: seconds left
         self.set_sheet(kart_name)
         self.image = self.base_image
         self.rect = self.image.get_rect()
@@ -280,11 +299,12 @@ class PathFollower(Kart):
         # framerate independent exponential smoothing
         blend = 1 - exp(-self.speed_smoothing * dt)
         self.variance_factor += (self.target_variance_factor - self.variance_factor) * blend
-        self.max_speed = self.base_max_speed * self.variance_factor
+        self.max_speed = self.base_max_speed * self.variance_factor * self.speed_factor
 
 
     def update(self, dt):
         if self.game.started:
+            self.update_effects(dt)
             self.update_speed_variance(dt)
             self.follow_path()
             self.separate()
@@ -319,6 +339,7 @@ class Player(Kart):
         pg.sprite.Sprite.__init__(self, game.billboards)
         self.game = game
         self.name = "player"
+        self.effect_timers = {}  # same as in PathFollower.__init__
         self.depth = 0
         self.visible = True
 
@@ -345,7 +366,7 @@ class Player(Kart):
     
     def update(self, dt):
         self.time_passed += dt
-
+        self.update_effects(dt)
         keys = pg.key.get_pressed()
         
         if not self.game.started:
@@ -430,7 +451,7 @@ class Player(Kart):
                 # store position if ground_speed is 1 (= on road)
                 self.last_road_pos.x = self.pos.x
                 self.last_road_pos.y = self.pos.y
-            self.acc *= ground_speed
+            self.acc *= ground_speed * self.speed_factor
     
             self.vel.x += self.acc.x * cos(self.angle) * dt
             self.vel.y += self.acc.y * sin(self.angle) * dt
