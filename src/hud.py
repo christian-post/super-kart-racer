@@ -41,7 +41,7 @@ class HUD:
     def handle_event(self, event):
         if event.type == LAP_COMPLETED:
             self.last_lap_time = event.lap_time
-            self.lap_time_until = pg.time.get_ticks() + self.game.config["Hud.lap_time_showing_duration"]
+            self.lap_time_until = pg.time.get_ticks() + self.game.config["Hud.lap_time_showing_duration"] * 1000
 
 
     @staticmethod
@@ -63,8 +63,8 @@ class HUD:
 
     def draw_lap_and_time(self, screen):
         r = self.race
-        lap = min(r.current_lap, r.max_laps)
-        self.draw_text(screen, f"LAP {lap}/{r.max_laps}",
+        lap = min(r.current_lap, r.course.max_laps)
+        self.draw_text(screen, f"LAP {lap}/{r.course.max_laps}",
                        (self.MARGIN, self.MARGIN), anchor="topleft")
         right = screen.get_width() - self.MARGIN
         r = self.draw_text(screen, f"TIME {self.format_time(r.race_time)}",

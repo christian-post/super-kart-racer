@@ -20,3 +20,5 @@ https://github.com/OneLoneCoder/videos/blob/master/OneLoneCoder_Pseudo3DPlanesMo
 
 Tileset: 
 https://kenney.nl/
+
+For other third party assets, see [here](assets/credits_and_licenses.txt).

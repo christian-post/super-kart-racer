@@ -27,7 +27,7 @@ class FollowMode(CameraMode):
 
 
 class OrbitMode(CameraMode):
-    def __init__(self, speed=0.5, distance_factor=1.0):
+    def __init__(self, speed=0.4, distance_factor=1.0):
         self.speed = speed  # rad/s
         self.distance_factor = distance_factor
 

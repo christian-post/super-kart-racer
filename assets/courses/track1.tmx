@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="55">
+ <properties>
+  <property name="laps" type="int" value="5"/>
+ </properties>
  <tileset firstgid="1" source="racetrack_tiles_32.tsx"/>
  <layer id="1" name="ground" width="50" height="50">
   <data encoding="csv">
@@ -256,7 +259,7 @@
   <object id="52" name="bush" type="billboard" x="832" y="112" width="32" height="32"/>
   <object id="54" name="finish_line" type="billboard" x="1120" y="624" width="160" height="64"/>
  </objectgroup>
- <objectgroup id="8" name="path" visible="0">
+ <objectgroup id="8" name="path">
   <object id="53" type="path" x="1200" y="640">
    <polygon points="-16,-88 -32,-256 -112,-352 -264,-384 -560,-384 -712,-328 -792,-176 -792,280 -728,456 -576,560 -248,560 -64,456 -8,320"/>
   </object>

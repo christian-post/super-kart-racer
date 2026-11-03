@@ -23,8 +23,6 @@ class RacePhase(Enum):
 
 
 class Race(Scene):
-    MAX_LAPS = 3
-
     def __init__(self, game, course_name="track2", kart_name="kart2", **kwargs):
         super().__init__(game)
         self.course_name = course_name
@@ -36,7 +34,6 @@ class Race(Scene):
         self.lap_start_time = 0.0
         self.lap_times = []  # store all lap times
         self.current_lap = 1
-        self.max_laps = self.MAX_LAPS
         self.current_checkpoint = 0
 
         self.course = None
@@ -97,8 +94,10 @@ class Race(Scene):
                 finish = next((c for c in self.checkpoints if c.name == "finish"), None)
                 if finish is not None:
                     finish_center = sum((vec(p) for p in finish.points), vec()) / len(finish.points)
-                    self.standings = RaceStandings(self.course.path_points,
-                                                   finish_center, self.max_laps)
+                    self.standings = RaceStandings(
+                        self.course.path_points,
+                        finish_center, self.course.max_laps
+                        )
                     for kart in self.game.billboards:
                         if isinstance(kart, Kart):
                             self.standings.add_kart(kart, auto_finish=kart is not self.player)
@@ -182,13 +181,13 @@ class Race(Scene):
             if self.standings:
                 self.standings.update()
             self.check_lap_progress()
-            if self.current_lap > self.max_laps:
+            if self.current_lap > self.course.max_laps:
                 self.phase = RacePhase.FINISHED
                 if self.standings:
                     self.standings.mark_finished(self.player)
                 # replace player with AI kart
                 self.hand_player_to_ai()
-                self.camera.set_mode(OrbitMode())
+                self.camera.set_mode(OrbitMode(speed=self.game.config["Visuals.camera_orbit_speed"]))
 
         elif self.phase == RacePhase.FINISHED:
             # world keeps running, player kart is now AI driven
@@ -210,7 +209,7 @@ class Race(Scene):
         if isinstance(self.player, Player):
             self.game.debug_values["last_road_pos"] = (
                 f"{self.player.last_road_pos.x:.3f}, {self.player.last_road_pos.y:.3f}")
-        self.game.debug_values["lap"] = f"{self.current_lap}/{self.max_laps}"
+        self.game.debug_values["lap"] = f"{self.current_lap}/{self.course.max_laps}"
         self.game.debug_values["checkpoint"] = f"{self.current_checkpoint}"
 
 

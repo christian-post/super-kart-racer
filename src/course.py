@@ -21,6 +21,8 @@ class Course:
         objects  - object layer (optional), object named "start" with
                    optional custom property "angle" (radians)
     """
+    
+    DEFAULT_MAX_LAPS = 3
 
     def __init__(self, folder, name, road_layer="road",
                  killzone_layer="killzone", offroad_speed=0.3):
@@ -37,6 +39,7 @@ class Course:
                                               bool)
         self.start_positions = self._load_start_positions()
         self.path_points = self._load_path()
+        self.max_laps = self.tiled_map.properties.get("laps", self.DEFAULT_MAX_LAPS)
 
         self.game_object_data = {layer.name: list(layer) for layer in self.tiled_map.objectgroups}
 
