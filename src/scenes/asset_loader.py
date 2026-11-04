@@ -38,7 +38,8 @@ class AssetLoader(Scene):
                 ) for i in range(n)]
             self.game.assets["spritesheets"][key] = frames
             if "kart" in key:
-                self.game.kart_names.append(key)
+                if "_frame" not in key:
+                    self.game.kart_names.append(key)
                 frames_flipped = [
                     pg.transform.flip(frame, True, False) for frame in frames]
                 self.game.assets["spritesheets"][f"{key}_flipped"] = frames_flipped

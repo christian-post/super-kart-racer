@@ -3,6 +3,7 @@ from math import sin, cos, pi, atan2, degrees, radians, exp
 from random import uniform
 from enum import Enum
 
+from src.animation import Animation
 from src.particle import Particle
 
 vec = pg.math.Vector2
@@ -45,7 +46,14 @@ class Billboard(pg.sprite.Sprite):
 
         if self.name not in Billboard.base_images:
             Billboard.base_images[self.name] = game.assets["sprites"].get(self.name)
-        self.base_image = Billboard.base_images[self.name]
+        self.animation = None
+        sheet = game.assets["spritesheets"].get(self.name)
+        if sheet:
+            fps = game.config["Assets.animation_fps"][self.name]
+            self.animation = Animation(sheet, fps)
+            self.base_image = sheet[0]
+        else:
+            self.base_image = Billboard.base_images[self.name]
         self.image = self.base_image
         self.rect = self.image.get_rect()
         self.depth = 0
@@ -62,7 +70,10 @@ class Billboard(pg.sprite.Sprite):
 
 
     def update(self, dt):
-        pass  # static by default, moving subclasses override this
+        # moving subclasses override this
+        if self.animation:
+            self.animation.update(dt)
+            self.base_image = self.animation.current
 
 
     def project(self):
@@ -134,9 +145,21 @@ class Kart(Billboard):
 
 
     def set_sheet(self, kart_name):
-        self.images = self.game.assets["spritesheets"][kart_name]
-        self.images_flipped = self.game.assets["spritesheets"][f"{kart_name}_flipped"]
-        self.base_image = self.images[0]
+        # kart1, kart1_frame1, kart1_frame2, ... (extra sheets are optional)
+        spritesheets = self.game.assets["spritesheets"]
+        sheet_names = [kart_name]
+        while f"{kart_name}_frame{len(sheet_names)}" in spritesheets:
+            sheet_names.append(f"{kart_name}_frame{len(sheet_names)}")
+        sheets = [(spritesheets[name], spritesheets[f"{name}_flipped"])
+                  for name in sheet_names]
+        frames_per_unit = self.game.config["Visuals.kart_frames_per_world_unit"]
+        self.sheet_animation = Animation(sheets, frames_per_unit)
+        self.base_image = sheets[0][0][0]
+
+
+    def update_sheet_animation(self, dt):
+        # animation speed follows driving speed
+        self.sheet_animation.update(dt, self.vel.length())
 
 
     @property
@@ -158,7 +181,8 @@ class Kart(Billboard):
         else:
             view_angle = camera.angle
         yaw = self.angle - view_angle + self.steer_yaw
-        self.base_image = get_kart_frame(self.images, self.images_flipped, yaw)
+        images, images_flipped = self.sheet_animation.current
+        self.base_image = get_kart_frame(images, images_flipped, yaw)
         super().project()
 
 
@@ -304,6 +328,7 @@ class PathFollower(Kart):
 
     def update(self, dt):
         if self.game.started:
+            self.update_sheet_animation(dt)
             self.update_effects(dt)
             self.update_speed_variance(dt)
             self.follow_path()
@@ -367,6 +392,7 @@ class Player(Kart):
     def update(self, dt):
         self.time_passed += dt
         self.update_effects(dt)
+        self.update_sheet_animation(dt)
         keys = pg.key.get_pressed()
         
         if not self.game.started:

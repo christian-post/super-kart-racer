@@ -8,10 +8,15 @@ fps = 60
 [Assets]
 num_images = {
     kart1 = 12,
+    kart1_frame1 = 12,
     kart2 = 12,
     kart3 = 12,
     kart4 = 12,
-    lights = 5
+    lights = 5,
+    flag = 4
+}
+animation_fps = {
+    flag = 8
 }
 bg_scale_factors = {
     cloudy_sky = 0.2,
@@ -27,6 +32,7 @@ mountain_scroll_rate = 1.0
 menu_font_size = 8
 dust_cloud_interval = 0.2
 kart_jiggle_speed = 8
+kart_frames_per_world_unit = 0.06
 camera_orbit_speed = 0.3
 
 [Hud]
