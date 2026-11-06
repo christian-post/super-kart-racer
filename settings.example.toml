@@ -13,7 +13,8 @@ num_images = {
     kart3 = 12,
     kart4 = 12,
     lights = 5,
-    flag = 4
+    flag = 4,
+    fire = 6
 }
 animation_fps = {
     flag = 8
@@ -34,6 +35,9 @@ dust_cloud_interval = 0.2
 kart_jiggle_speed = 8
 kart_frames_per_world_unit = 0.06
 camera_orbit_speed = 0.3
+fire_particle_interval = 0.05
+fire_frame_duration = 0.05
+fire_particle_speed = 1.0
 
 [Hud]
 font_sizes = [8, 24]

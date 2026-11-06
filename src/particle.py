@@ -14,23 +14,27 @@ def lerp_colors(color, start, end, dist):
 
 class Particle(pg.sprite.Sprite):
     def __init__(self, game, pos, images=None, colors=[], vel=vec(),
-                 random_angle=0, vanish_speed=4, start_size=1, end_size=1,
-                 lifespan=4):
+                 random_angle=0, vanish_speed=4, begin_size=1, end_size=1,
+                 animation_frames=None, frame_duration=0.1):
         super().__init__(game.all_sprites)
         self.game = game
-        
+
+        # optional animation, plays once, then the particle dies
+        self.animation_frames = animation_frames
+        self.frame_duration = frame_duration  # seconds per frame
+        self.time_passed = 0.0
+        if animation_frames:
+            images = [animation_frames[0]]
+
         if images:
             # if initialized with a list of images, choose one at random
             self.original_image = choice(images).copy()
-            if start_size != 1:
-                s = self.original_image.get_size()
-                self.original_image = pg.transform.scale(self.original_image, 
-                                     (s[0] * start_size, s[1] * start_size))
-            self.image = self.original_image.copy()
-            self.rect = self.image.get_rect()
-            self.size = list(self.rect.size)
+            self.base_size = self.original_image.get_size()
+            self.begin_size = begin_size  # scale factors, lerped over lifetime
             self.end_size = end_size
-            self.size_factor = 1 + (end_size - start_size) / lifespan
+            self.size = self.scaled_size(begin_size)
+            self.image = pg.transform.scale(self.original_image, self.size)
+            self.rect = self.image.get_rect()
         else:
             # if not initialized with images, draw a circle
             self.image = pg.Surface((20, 20))
@@ -64,6 +68,14 @@ class Particle(pg.sprite.Sprite):
     
     
     def update(self, dt):
+        if self.animation_frames:
+            self.time_passed += dt
+            frame_index = int(self.time_passed / self.frame_duration)
+            if frame_index >= len(self.animation_frames):
+                self.kill()
+                return
+            self.original_image = self.animation_frames[frame_index]
+
         # add velocity to position
         for f in self.forces:
             self.pos += f
@@ -79,10 +91,26 @@ class Particle(pg.sprite.Sprite):
         else:
             self.color.a = int(self.alpha)
             
-        self.size[0] = int(self.size[0] * self.size_factor)
-        self.size[1] = int(self.size[1] * self.size_factor)
+        size_scale = self.begin_size + (self.end_size - self.begin_size) * self.progress
+        self.size = self.scaled_size(size_scale)
         
     
+    @property
+    def progress(self):
+        # 0 at spawn, 1 at end of life
+        if self.animation_frames:
+            lifetime = len(self.animation_frames) * self.frame_duration
+            return min(1.0, self.time_passed / lifetime)
+        if self.vanish_speed > 0:
+            return min(1.0, 1 - self.alpha / 255)
+        return 0.0
+
+
+    def scaled_size(self, scale):
+        return [max(1, round(self.base_size[0] * scale)),
+                max(1, round(self.base_size[1] * scale))]
+
+
     def draw(self, screen):
         self.blend_colors()
         self.image = self.original_image.copy()

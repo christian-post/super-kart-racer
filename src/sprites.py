@@ -387,12 +387,15 @@ class Player(Kart):
         self.moving = 1 # 1 forward, -1 backwards
         self.dust_timer = 0
         self.dirt_timer = 0
+        self.fire_timer = 0
         
     
     def update(self, dt):
         self.time_passed += dt
         self.update_effects(dt)
         self.update_sheet_animation(dt)
+        if "turbo" in self.effect_timers:
+            self.emit_turbo_fire(dt)
         keys = pg.key.get_pressed()
         
         if not self.game.started:
@@ -568,6 +571,25 @@ class Player(Kart):
             print("Dead")
             self.pos.x = self.last_road_pos.x
             self.pos.y = self.last_road_pos.y
+
+
+    def emit_turbo_fire(self, dt):
+        config = self.game.config
+        interval = config["Visuals.fire_particle_interval"]
+        speed = config["Visuals.fire_particle_speed"]
+        self.fire_timer += dt
+        while self.fire_timer >= interval:
+            self.fire_timer -= interval
+            # trails toward the camera = down on screen
+            Particle(
+                self.game,
+                self.rect.midbottom,
+                colors=[pg.Color("white")],
+                vel=vec(uniform(-0.5, 0.5) * speed, speed),
+                vanish_speed=0,  # animation decides the lifetime
+                animation_frames=self.game.assets["spritesheets"]["fire"],
+                frame_duration=config["Visuals.fire_frame_duration"],
+            )
 
 
     @property

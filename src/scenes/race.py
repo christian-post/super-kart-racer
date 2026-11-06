@@ -10,6 +10,7 @@ from src.course import Course
 from src.sprites import Player, TrafficLight, Billboard, PathFollower, Kart, OilSpill
 from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
+from src.particle import Particle
 import src.utils as utils
 
 
@@ -235,8 +236,15 @@ class Race(Scene):
         # world sprites far to near, then screen sprites (traffic light, particles)
         for billboard in sorted(self.game.billboards, key=lambda b: b.depth, reverse=True):
             billboard.draw(screen)
+
+        # draw particles seperately with draw order (closer = drawn later)
+        particles = [sprite for sprite in self.game.all_sprites if isinstance(sprite, Particle)]
+        for particle in sorted(particles, key=lambda particle: particle.pos.y):
+            particle.draw(screen)
+
         for sprite in self.game.all_sprites:
-            sprite.draw(screen)
+            if not isinstance(sprite, Particle):
+                sprite.draw(screen)
 
         if self.phase in [RacePhase.COUNTDOWN, RacePhase.RACING]:
             self.hud.draw(screen)
