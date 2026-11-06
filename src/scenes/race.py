@@ -11,6 +11,7 @@ from src.sprites import Player, TrafficLight, Billboard, PathFollower, Kart, Oil
 from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
 from src.particle import Particle
+from src.speed_lines import SpeedLines
 import src.utils as utils
 
 
@@ -46,6 +47,7 @@ class Race(Scene):
         self.checkpoints = []
         self.num_checkpoints = 0
         self.standings = None
+        self.speed_lines = None
 
 
     def startup(self):
@@ -105,6 +107,7 @@ class Race(Scene):
 
         # HUD reads lap/time/player/course from the race scene
         self.hud = HUD(self, self.course.tiled_map if self.course else None)
+        self.speed_lines = SpeedLines(self.game)
 
 
     def cleanup(self):
@@ -186,6 +189,8 @@ class Race(Scene):
             self.game.billboards.update(dt)
             if self.standings:
                 self.standings.update()
+            self.speed_lines.update(dt, self.player.speed_factor)
+
             self.check_lap_progress()
             if self.current_lap > self.course.max_laps:
                 self.phase = RacePhase.FINISHED
@@ -198,6 +203,7 @@ class Race(Scene):
         elif self.phase == RacePhase.FINISHED:
             # world keeps running, player kart is now AI driven
             self.game.all_sprites.update(dt)
+            self.speed_lines.update(dt, 0.0)  # get rid of the effect
             if self.standings:
                 self.standings.update()  # AI karts still finish behind the player
             for billboard in self.game.billboards:
@@ -245,6 +251,8 @@ class Race(Scene):
         for sprite in self.game.all_sprites:
             if not isinstance(sprite, Particle):
                 sprite.draw(screen)
+
+        self.speed_lines.draw(screen)
 
         if self.phase in [RacePhase.COUNTDOWN, RacePhase.RACING]:
             self.hud.draw(screen)

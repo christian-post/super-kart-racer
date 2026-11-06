@@ -580,10 +580,10 @@ class Player(Kart):
         self.fire_timer += dt
         while self.fire_timer >= interval:
             self.fire_timer -= interval
-            # trails toward the camera = down on screen
+            # particles move down on screen = toward the camera
             Particle(
                 self.game,
-                self.rect.midbottom,
+                self.rect.midbottom - vec(0, 4),
                 colors=[pg.Color("white")],
                 vel=vec(uniform(-0.5, 0.5) * speed, speed),
                 vanish_speed=0,  # animation decides the lifetime
