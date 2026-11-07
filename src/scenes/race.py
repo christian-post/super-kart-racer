@@ -7,7 +7,8 @@ from src.scenes.scene import Scene
 from src.render import Mode7
 from src.camera import Camera, FollowMode, OrbitMode
 from src.course import Course
-from src.sprites import Player, TrafficLight, Billboard, PathFollower, Kart, OilSpill
+from src.sprites import Player, TrafficLight, PathFollower, Kart, OilSpill
+from src.billboard_factory import create_billboard
 from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
 from src.particle import Particle
@@ -81,7 +82,7 @@ class Race(Scene):
             
             for obj in self.course.game_object_data.get("sprites", []):
                 if obj.type == "billboard":
-                    Billboard(self.game, obj)
+                    create_billboard(self.game, obj)
                     
             # AI karts on grid positions 1-3, all karts the player didn't pick
             if len(self.course.path_points) > 1:
@@ -124,6 +125,9 @@ class Race(Scene):
             self.game.switch_scene("CourseSelect")
         elif event.key == pg.K_RETURN and self.phase == RacePhase.FINISHED:
             self.game.switch_scene("CourseSelect")
+        elif event.key == pg.K_i and self.phase == RacePhase.RACING:
+            self.player.use_item()
+            
         # Debug functions
         elif event.key == pg.K_t:  # debug: turbo
             self.player.apply_effect("turbo")

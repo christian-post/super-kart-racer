@@ -12,7 +12,8 @@ class AssetLoader(Scene):
             "sprites": Path(game.assets_folder, "sprites"),
             "spritesheets": Path(game.assets_folder, "sprites", "spritesheets"),
             "fonts": Path(game.assets_folder, "fonts"),
-            "backgrounds": Path(game.assets_folder, "backgrounds")
+            "backgrounds": Path(game.assets_folder, "backgrounds"),
+            "portraits": Path(game.assets_folder, "portraits"),
         }
 
         game.kart_names = []
@@ -47,6 +48,12 @@ class AssetLoader(Scene):
                 self.game.assets["spritesheets"][f"{key}_flipped"] = frames_flipped
 
 
+    def load_portraits(self):
+        for file in self.folders["portraits"].glob("*.png"):
+            img = pg.image.load(file).convert_alpha()
+            self.game.assets["portraits"][file.stem] = img
+
+
     def load_backgrounds(self):
         bg_files = self.folders["backgrounds"].glob("*.png")
         for file in bg_files:
@@ -75,6 +82,7 @@ class AssetLoader(Scene):
 
     def startup(self):
         self.load_sprites()
+        self.load_portraits()
         self.load_backgrounds()
         self.load_fonts()
 

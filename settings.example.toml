@@ -15,11 +15,11 @@ num_images = {
     lights = 5,
     flag = 4,
     fire = 6,
-    box = 4
+    itembox = 4
 }
 animation_fps = {
     flag = 8,
-    box = 4
+    itembox = 4
 }
 bg_scale_factors = {
     cloudy_sky = 0.2,
@@ -64,6 +64,7 @@ speed_bar_gap = 1
 speed_bar_min_h = 2
 speed_bar_step_h = 1
 lap_time_showing_duration = 5
+item_frame_size = 18
 
 [Gameplay]
 offroad_speed = 0.3
@@ -92,6 +93,7 @@ oil_speed_factor = 0.5
 oil_duration = 2.0
 oil_lifetime = 25.0
 oil_world_width = 32
+item_box_respawn_time = 3.0
 
 [Debug]
 font_size = 16

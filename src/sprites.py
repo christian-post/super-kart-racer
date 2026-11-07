@@ -34,6 +34,12 @@ class Billboard(pg.sprite.Sprite):
     # scaled images get cached to avoid constant scaling operations
     base_images = {}  # name -> surface
     scaled_images = {}  # (name, width) -> surface
+    subclasses_by_tiled_name = {}  # filled by __init_subclass__
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        Billboard.subclasses_by_tiled_name[cls.__name__.lower()] = cls
+
 
     def __init__(self, game, tiled_object):
         super().__init__(game.billboards)
@@ -388,6 +394,8 @@ class Player(Kart):
         self.dust_timer = 0
         self.dirt_timer = 0
         self.fire_timer = 0
+
+        self.item = None  # held item
         
     
     def update(self, dt):
@@ -571,6 +579,13 @@ class Player(Kart):
             print("Dead")
             self.pos.x = self.last_road_pos.x
             self.pos.y = self.last_road_pos.y
+
+
+    def use_item(self):
+        if self.item is None:
+            return
+        self.item.use(self.game, self)
+        self.item = None
 
 
     def emit_turbo_fire(self, dt):

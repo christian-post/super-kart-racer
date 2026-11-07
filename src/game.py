@@ -43,6 +43,7 @@ class Game:
             "sprites": {},
             "spritesheets": {},
             "backgrounds": {},
+            "portraits": {},
             "fonts": {},
             # TODO music and sfx
         }  # gets populated by the AssetLoader scene

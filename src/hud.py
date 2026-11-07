@@ -36,6 +36,9 @@ class HUD:
         self.MARGIN = game.config["Hud.margin"]
         self.last_lap_time = None
         self.lap_time_until = 0  # pg.time.get_ticks() timestamp
+        item_frame_size = game.config["Hud.item_frame_size"]
+        self.item_frame = pg.Surface((item_frame_size, item_frame_size), pg.SRCALPHA)
+        self.item_frame.fill((0, 0, 0, 110))
 
 
     def handle_event(self, event):
@@ -152,8 +155,21 @@ class HUD:
                        anchor="topleft")
 
 
+    def draw_item(self, screen):
+        # empty slot is always shown, below the lap counter
+        top = self.MARGIN + self.font.get_height() + 3
+        rect = self.item_frame.get_rect(topleft=(self.MARGIN + 1, top))
+        screen.blit(self.item_frame, rect)
+        pg.draw.rect(screen, (255, 255, 255), rect.inflate(2, 2), 1)
+        item = getattr(self.game.player, "item", None)  # AI karts have no slot
+        if item is not None:
+            portrait = self.game.assets["portraits"][f"item_{item.name}"]
+            screen.blit(portrait, portrait.get_rect(center=rect.center))
+
+
     def draw(self, screen):
         self.draw_lap_and_time(screen)
+        self.draw_item(screen)
         self.draw_speedometer(screen)
         self.draw_minimap(screen)
         self.draw_position(screen)
