@@ -15,10 +15,11 @@ num_images = {
     lights = 5,
     flag = 4,
     fire = 6,
-    box=4
+    box = 4
 }
 animation_fps = {
-    flag = 8
+    flag = 8,
+    box = 4
 }
 bg_scale_factors = {
     cloudy_sky = 0.2,
