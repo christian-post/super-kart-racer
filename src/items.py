@@ -19,6 +19,13 @@ class Turbo(Item):
         kart.apply_effect("turbo")
 
 
+class Maxturbo(Item):
+    name = "maxturbo"
+
+    def use(self, game, kart):
+        kart.apply_effect("maxturbo")
+
+
 class Oil(Item):
     name = "oil"
 
@@ -26,7 +33,7 @@ class Oil(Item):
         OilSpill(game, kart)
 
 
-ITEM_TYPES = [Turbo, Oil]
+ITEM_TYPES = [Turbo, Maxturbo, Oil]
 
 
 def random_item():

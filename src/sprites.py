@@ -402,7 +402,7 @@ class Player(Kart):
         self.time_passed += dt
         self.update_effects(dt)
         self.update_sheet_animation(dt)
-        if "turbo" in self.effect_timers:
+        if "turbo" in self.effect_timers or "maxturbo" in self.effect_timers:
             self.emit_turbo_fire(dt)
         keys = pg.key.get_pressed()
         
