@@ -85,7 +85,17 @@ oil_speed_factor = 0.5
 oil_duration = 2.0
 oil_lifetime = 25.0
 oil_world_width = 32
+shrink_speed_factor = 0.6
+shrink_duration = 6.0
+shrink_size_factor = 0.5
 item_box_respawn_time = 3.0
+
+[ItemOdds]
+# relative weights per position, first place to last place
+oil = [6, 4, 1, 0]
+turbo = [1, 4, 5, 4]
+maxturbo = [0, 0, 3, 6]
+shrink = [0, 0, 2, 8]
 
 [Debug]
 font_size = 16

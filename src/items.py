@@ -1,6 +1,6 @@
-from random import choice
+from random import choices
 
-from src.sprites import Billboard, Player, OilSpill
+from src.sprites import Billboard, Player, OilSpill, Kart
 
 
 class Item:
@@ -33,11 +33,29 @@ class Oil(Item):
         OilSpill(game, kart)
 
 
-ITEM_TYPES = [Turbo, Maxturbo, Oil]
+class Shrink(Item):
+    name = "shrink"
+
+    def use(self, game, kart):
+        # every kart except the user
+        for sprite in game.billboards:
+            if isinstance(sprite, Kart) and sprite is not kart:
+                sprite.apply_effect("shrink")
 
 
-def random_item():
-    return choice(ITEM_TYPES)()
+ITEM_TYPES = {item.name: item for item in (Turbo, Maxturbo, Oil, Shrink)}
+
+
+def random_item(game, position, kart_count):
+    # position 1 = first; maps relative race position onto the ItemOdds columns
+    odds = game.config["ItemOdds"]
+    names = list(odds.keys())
+    column_count = len(odds[names[0]])
+    relative_position = (position - 1) / max(1, kart_count - 1)
+    column = round(relative_position * (column_count - 1))
+    weights = [odds[name][column] for name in names]
+    name = choices(names, weights=weights)[0]
+    return ITEM_TYPES[name]()
 
 
 class ItemBox(Billboard):
@@ -61,7 +79,9 @@ class ItemBox(Billboard):
     def collect(self, kart):
         # box breaks either way, item only if the slot is empty
         if kart.item is None:
-            kart.item = random_item()
+            standings = self.game.scene_stack[-1].standings  # TODO refactor to not access scene directly
+            position = standings.position_of(kart)
+            kart.item = random_item(self.game, position, len(standings.karts))
         self.time_until_respawn = self.respawn_time
 
 

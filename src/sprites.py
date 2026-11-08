@@ -175,7 +175,10 @@ class Kart(Billboard):
         screen_w = self.game.game_screen_rect.w
         frustum_dist = mode7.kart_ground_distance() / cos(mode7.fov_half)
         row_width = 2 * frustum_dist * sin(mode7.fov_half)
-        return self.base_image.get_width() * row_width / screen_w
+        width = self.base_image.get_width() * row_width / screen_w
+        if "shrink" in self.effect_timers:
+            width *= self.game.config["Gameplay.shrink_size_factor"]
+        return width
 
 
     def project(self):
