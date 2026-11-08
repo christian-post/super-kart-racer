@@ -17,11 +17,11 @@ class Game:
         base_dir = Path(__file__).parents[0]
         self.assets_folder = Path(base_dir, "..", "assets")
 
-        # handle config file
-        # the example file (readonly) contents get copied to the real settings file, which will be modified
+        # settings.toml (user, created from example) + config.toml (constants), both accessed via self.config
         self.config = Config(
             Path(base_dir, "..", "settings.toml"),
-            Path(base_dir, "..", "settings.example.toml"))
+            Path(base_dir, "..", "settings.example.toml"),
+            Path(base_dir, "..", "config.toml"))
 
         # debugging
         self.debug_font = pg.font.SysFont('consolas', self.config["Debug.font_size"])
