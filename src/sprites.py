@@ -129,7 +129,16 @@ class Billboard(pg.sprite.Sprite):
 
 
 class Kart(Billboard):
-    # billboard using a kart sheet, needs angle, steer_yaw and map_pos
+    # billboard using a kart spritesheet, needs angle, steer_yaw and map_pos
+    item = None  # held item, set per instance on pickup
+
+    def use_item(self):
+        if self.item is None:
+            return
+        self.item.use(self.game, self)
+        self.item = None
+
+
     def apply_effect(self, effect_name):
         duration = self.game.config[f"Gameplay.{effect_name}_duration"]
         self.effect_timers[effect_name] = duration
@@ -193,7 +202,17 @@ class Kart(Billboard):
         images, images_flipped = self.sheet_animation.current
         self.base_image = get_kart_frame(images, images_flipped, yaw)
         super().project()
+        # locked kart skips world_width scaling, so apply shrink here
+        if camera.is_locked_on(self) and "shrink" in self.effect_timers:
+            shrink_factor = self.game.config["Gameplay.shrink_size_factor"]
+            width = max(1, round(self.base_image.get_width() * shrink_factor))
+            self.image = self.get_scaled_image(width)
 
+
+    def draw(self, screen):
+        # image can be smaller than rect (shrink), keep it on the ground
+        if self.visible:
+            screen.blit(self.image, self.image.get_rect(midbottom=self.rect.midbottom))
 
 
 class PathFollower(Kart):
@@ -233,6 +252,9 @@ class PathFollower(Kart):
         self.separation_distance = game.config["Gameplay.ai_separation_distance"]  # in kart widths
         self.separation_weight = game.config["Gameplay.ai_separation_weight"]   # relative to path following
         self.target_ahead = game.config["Gameplay.ai_target_ahead"]      # px along the path
+        self.item_delay_min = game.config["Gameplay.ai_item_delay_min"]
+        self.item_delay_max = game.config["Gameplay.ai_item_delay_max"]
+        self.time_until_item_use = None  # None = no item held
 
         self.map_pos = vec(start_pos)
         self.vel = vec()  # standing on the grid until the race starts
@@ -248,6 +270,18 @@ class PathFollower(Kart):
     @property
     def pos(self):
         return self.map_pos
+
+
+    def update_item(self, dt):
+        # use a held item after a random delay
+        if self.item is None:
+            self.time_until_item_use = None
+            return
+        if self.time_until_item_use is None:
+            self.time_until_item_use = uniform(self.item_delay_min, self.item_delay_max)
+        self.time_until_item_use -= dt
+        if self.time_until_item_use <= 0:
+            self.use_item()
 
 
     def get_normal_point(self, point, segment_start, segment_end):
@@ -340,6 +374,7 @@ class PathFollower(Kart):
             self.update_sheet_animation(dt)
             self.update_effects(dt)
             self.update_speed_variance(dt)
+            self.update_item(dt)
             self.follow_path()
             self.separate()
             self.accelerate()
@@ -582,13 +617,6 @@ class Player(Kart):
             print("Dead")
             self.pos.x = self.last_road_pos.x
             self.pos.y = self.last_road_pos.y
-
-
-    def use_item(self):
-        if self.item is None:
-            return
-        self.item.use(self.game, self)
-        self.item = None
 
 
     def emit_turbo_fire(self, dt):

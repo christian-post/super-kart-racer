@@ -1,6 +1,6 @@
 from random import choices
 
-from src.sprites import Billboard, Player, OilSpill, Kart
+from src.sprites import Billboard, OilSpill, Kart
 
 
 class Item:
@@ -91,7 +91,7 @@ class ItemBox(Billboard):
             self.time_until_respawn -= dt
             return
         for sprite in self.game.billboards:
-            if isinstance(sprite, Player) and self.touches(sprite):
+            if isinstance(sprite, Kart) and self.touches(sprite):
                 self.collect(sprite)
                 return
 
