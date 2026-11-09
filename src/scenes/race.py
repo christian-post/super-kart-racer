@@ -36,6 +36,7 @@ class Race(Scene):
         self.race_time = 0.0
         self.lap_start_time = 0.0
         self.lap_times = []  # store all lap times
+        self.results_scroll_time = 0.0  # lap list scrolling on the finish screen
         self.current_lap = 1
         self.current_checkpoint = 0
 
@@ -130,7 +131,7 @@ class Race(Scene):
             
         # Debug functions
         elif event.key == pg.K_t:  # debug: turbo
-            self.player.apply_effect("turbo")
+            self.player.apply_effect("maxturbo")
         elif event.key == pg.K_y:  # debug: oil
             OilSpill(self.game, self.player)
         elif event.key == pg.K_c:  # debug: toggle camera mode
@@ -206,6 +207,7 @@ class Race(Scene):
 
         elif self.phase == RacePhase.FINISHED:
             # world keeps running, player kart is now AI driven
+            self.results_scroll_time += dt
             self.game.all_sprites.update(dt)
             self.speed_lines.update(dt, 0.0)  # get rid of the effect
             if self.standings:
@@ -239,6 +241,19 @@ class Race(Scene):
             x += image_width
 
 
+    def get_results_scroll_offset(self, num_lines, visible_lines, line_height):
+        # hold at top, scroll down, hold at bottom, jump back to top
+        max_offset = (num_lines - visible_lines) * line_height
+        if max_offset <= 0:
+            return 0
+        delay = self.game.config["Hud.finish_scroll_delay"]
+        speed = self.game.config["Hud.finish_scroll_speed"]
+        cycle_duration = delay + max_offset / speed + delay
+        time_in_cycle = self.results_scroll_time % cycle_duration
+        offset = (time_in_cycle - delay) * speed
+        return int(min(max(offset, 0), max_offset))
+    
+
     def draw(self, screen):
         self.blit_scrolling(screen, self.game.background, self.game.config["Visuals.sky_scroll_rate"], self.game.background_y)
         self.blit_scrolling(screen, self.game.mountains, self.game.config["Visuals.mountain_scroll_rate"], self.game.mountains_y)
@@ -269,9 +284,11 @@ class Race(Scene):
             center_x = screen.get_width() // 2
             line_height = 12
 
-            lines = [f"Total {HUD.format_time(self.race_time)}"]
-            lines += [f"Lap {lap} {HUD.format_time(t)}" for lap, t in enumerate(self.lap_times, start=1)]
-            text_x = center_x - max(self.game.font.size(line)[0] for line in lines) // 2
+            total_line = f"Total {HUD.format_time(self.race_time)}"
+            lap_lines = [f"Lap {lap} {HUD.format_time(t)}" for lap, t in enumerate(self.lap_times, start=1)]
+            star_image = self.game.assets["sprites"]["star"]
+            text_width = max(self.game.font.size(line)[0] for line in [total_line] + lap_lines)
+            text_x = center_x - text_width // 2
 
             self.draw_text(screen, "FINISH!", (center_x, 40), "yellow")
             if self.standings:
@@ -279,14 +296,33 @@ class Race(Scene):
                 self.draw_text(screen, f"POS {position}/{len(self.standings.karts)}",
                                (center_x, 52))
 
-            fastest_lap = self.lap_times.index(min(self.lap_times)) + 1
             y = 65
-            for index, line in enumerate(lines):
-                color = "gold" if index == fastest_lap else "white"
-                line_rect = self.draw_text(screen, line, (text_x, y), color, anchor="midleft")
-                if index == fastest_lap:
-                    star_rect = self.game.assets["sprites"]["star"].get_rect(midleft=(line_rect.right + 2, line_rect.centery))
-                    screen.blit(self.game.assets["sprites"]["star"], star_rect)
-                y += line_height
+            self.draw_text(screen, total_line, (text_x, y), anchor="midleft")
+            box_margin_top = 3
+            y += line_height + box_margin_top
 
-            self.draw_text(screen, "Enter: continue", (center_x, y + line_height))
+            # lap list box, only a few laps visible at a time
+            visible_laps = self.game.config["Hud.finish_visible_laps"]
+            box_padding_top = 1
+            box_padding_bottom = 1
+            box_rect = pg.Rect(0, 0,
+                               text_width + star_image.get_width() + 2 + box_padding_top * 2,
+                               min(len(lap_lines), visible_laps) * line_height + box_padding_top + box_padding_bottom)
+            box_rect.midtop = (center_x + (star_image.get_width() + 2) // 2, y - line_height // 2 - box_padding_top)
+            scroll_offset = self.get_results_scroll_offset(len(lap_lines), visible_laps, line_height)
+            previous_clip = screen.get_clip()
+            screen.set_clip(box_rect)
+
+            fastest_lap_index = self.lap_times.index(min(self.lap_times))
+            lap_y = y - scroll_offset
+            for index, line in enumerate(lap_lines):
+                color = "gold" if index == fastest_lap_index else "white"
+                line_rect = self.draw_text(screen, line, (text_x, lap_y), color, anchor="midleft")
+                if index == fastest_lap_index:
+                    star_rect = star_image.get_rect(midleft=(line_rect.right + 2, line_rect.centery))
+                    screen.blit(star_image, star_rect)
+                lap_y += line_height
+
+            screen.set_clip(previous_clip)
+
+            self.draw_text(screen, "Enter: continue", (center_x, box_rect.bottom + line_height))

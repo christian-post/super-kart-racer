@@ -55,6 +55,9 @@ speed_bar_min_h = 2
 speed_bar_step_h = 1
 lap_time_showing_duration = 5
 item_frame_size = 18
+finish_visible_laps = 3
+finish_scroll_delay = 2.0
+finish_scroll_speed = 8
 
 [Gameplay]
 offroad_speed = 0.3
