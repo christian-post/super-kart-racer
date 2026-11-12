@@ -8,7 +8,8 @@ num_images = {
     lights = 5,
     flag = 4,
     fire = 6,
-    itembox = 4
+    itembox = 4,
+    kart_icons = 4
 }
 animation_fps = {
     flag = 8,
