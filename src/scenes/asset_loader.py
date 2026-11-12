@@ -40,7 +40,7 @@ class AssetLoader(Scene):
                 (i * frame_width, 0, frame_width, frame_height)
                 ) for i in range(n)]
             self.game.assets["spritesheets"][key] = frames
-            if "kart" in key:
+            if key.startswith("kart") and key != "kart_icons":
                 if "_frame" not in key:
                     self.game.kart_names.append(key)
                 frames_flipped = [

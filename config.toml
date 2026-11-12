@@ -59,6 +59,13 @@ item_frame_size = 18
 finish_visible_laps = 3
 finish_scroll_delay = 2.0
 finish_scroll_speed = 8
+rival_warning_distance = 200
+rival_warning_min_distance = 30
+rival_frame_padding = 2
+rival_arrow_size = 4
+rival_icon_min_scale = 0.4
+rival_icon_max_scale = 1.0
+rival_max_x_offset = 80
 
 [Gameplay]
 offroad_speed = 0.3

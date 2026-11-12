@@ -167,9 +167,77 @@ class HUD:
             screen.blit(portrait, portrait.get_rect(center=rect.center))
 
 
+    def find_rivals_behind(self):
+        # all AI karts behind the player within warning range, farthest first
+        # returns list of (kart, gap)
+        standings = self.race.standings
+        if standings is None:
+            return []
+        player = self.game.player
+        max_distance = self.game.config["Hud.rival_warning_distance"]
+        min_distance = self.game.config["Hud.rival_warning_min_distance"]
+        rivals = []
+        for kart in standings.karts:
+            if kart is player or kart in standings.finish_order:
+                continue
+            gap = standings.progress[player] - standings.progress[kart]
+            if min_distance < gap < max_distance:
+                rivals.append((kart, gap))
+        rivals.sort(key=lambda rival_and_gap: rival_and_gap[1], reverse=True)
+        return rivals
+
+
+    def draw_rival_warning(self, screen, rival, gap):
+        config = self.game.config
+        icon_index = int(rival.name.removeprefix("kart")) - 1
+        icon = self.game.assets["spritesheets"]["kart_icons"][icon_index]
+
+        # size: max scale at min distance, min scale at max distance
+        min_distance = config["Hud.rival_warning_min_distance"]
+        max_distance = config["Hud.rival_warning_distance"]
+        distance_fraction = (gap - min_distance) / max(max_distance - min_distance, 1)
+        min_scale = config["Hud.rival_icon_min_scale"]
+        max_scale = config["Hud.rival_icon_max_scale"]
+        scale = max_scale + (min_scale - max_scale) * distance_fraction
+        icon_size = (max(1, round(icon.get_width() * scale)),
+                     max(1, round(icon.get_height() * scale)))
+        icon = pg.transform.scale(icon, icon_size)
+
+        # x: sideways offset of the rival in camera space, -1 (left) .. 1 (right)
+        camera = self.game.camera
+        to_rival = rival.map_pos - self.game.player.map_pos
+        rival_distance = to_rival.length()
+        side_fraction = 0.0
+        if rival_distance > 0:
+            camera_right = vec(-camera.forward.y, camera.forward.x)
+            side_fraction = to_rival.dot(camera_right) / rival_distance
+        center_x = screen.get_width() // 2 + int(side_fraction * config["Hud.rival_max_x_offset"])
+
+        padding = config["Hud.rival_frame_padding"]
+        arrow_size = config["Hud.rival_arrow_size"]
+        arrow_tip_y = screen.get_height() - self.MARGIN
+
+        frame_rect = icon.get_rect().inflate(padding * 2, padding * 2)
+        frame_rect.midbottom = (center_x, arrow_tip_y - arrow_size - 1)
+        frame = pg.Surface(frame_rect.size, pg.SRCALPHA)
+        frame.fill((0, 0, 0, 110))
+        screen.blit(frame, frame_rect)
+        pg.draw.rect(screen, (255, 255, 255), frame_rect.inflate(2, 2), 1)
+        screen.blit(icon, icon.get_rect(center=frame_rect.center))
+
+        # arrow below the frame, pointing down
+        arrow_top_y = frame_rect.bottom + 1
+        arrow_points = [(center_x - arrow_size, arrow_top_y),
+                        (center_x + arrow_size, arrow_top_y),
+                        (center_x, arrow_tip_y)]
+        pg.draw.polygon(screen, (255, 255, 255), arrow_points)
+
+
     def draw(self, screen):
         self.draw_lap_and_time(screen)
         self.draw_item(screen)
         self.draw_speedometer(screen)
         self.draw_minimap(screen)
         self.draw_position(screen)
+        for rival, gap in self.find_rivals_behind():
+            self.draw_rival_warning(screen, rival, gap)
