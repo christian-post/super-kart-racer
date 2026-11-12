@@ -234,7 +234,7 @@ class Race(Scene):
     def blit_scrolling(self, screen, image, rate, y):
         # rate 1.0 = moves with the ground, < 1.0 = farther away
         image_width = image.get_width()
-        offset = int(self.player.angle * self.game.sky_speed * rate) % image_width
+        offset = int(self.camera.angle * self.game.sky_speed * rate) % image_width
         x = -offset
         while x < screen.get_width():  # tile if image is narrower than screen
             screen.blit(image, (x, y))
