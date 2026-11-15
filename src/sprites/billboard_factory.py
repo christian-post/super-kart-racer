@@ -1,4 +1,4 @@
-from src.sprites import Billboard
+from src.sprites.billboard import Billboard
 import src.items  # modules with Billboard subclasses register on import
 
 

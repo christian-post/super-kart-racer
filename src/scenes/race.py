@@ -7,8 +7,8 @@ from src.scenes.scene import Scene
 from src.render import Mode7
 from src.camera import Camera, FollowMode, OrbitMode
 from src.course import Course
-from src.sprites import Player, TrafficLight, PathFollower, Kart, OilSpill
-from src.billboard_factory import create_billboard
+from src.sprites import Player, TrafficLight, AI_Kart, Kart, OilSpill
+from src.sprites.billboard_factory import create_billboard
 from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
 from src.particle import Particle
@@ -93,7 +93,7 @@ class Race(Scene):
                     start_pos = self.course.get_start_position(position)
                     if start_pos is None:
                         continue
-                    PathFollower(self.game, self.course.path_points, kart_name,
+                    AI_Kart(self.game, self.course.path_points, kart_name,
                                  start_pos, self.player.angle)
 
                 finish = next((c for c in self.checkpoints if c.name == "finish"), None)
@@ -168,7 +168,7 @@ class Race(Scene):
         if not self.course or len(self.course.path_points) <= 1:
             return
         old_player = self.player
-        ai_kart = PathFollower(self.game, self.course.path_points, self.kart_name,
+        ai_kart = AI_Kart(self.game, self.course.path_points, self.kart_name,
                                old_player.pos, old_player.angle)
         ai_kart.vel = old_player.vel.copy()
         old_player.kill()

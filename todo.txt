@@ -3,7 +3,7 @@
 - animate the player's wheels
 
 features:
-- show an icon when an enemy is directly behind you
+- 
 
 bugs:
 - 
