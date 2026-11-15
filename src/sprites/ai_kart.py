@@ -2,7 +2,7 @@ import pygame as pg
 from math import sin, cos, pi, atan2, exp
 from random import uniform
 
-from src.sprites.kart import Kart
+from src.sprites.kart import Kart, MAX_STEER_FRAMES, STEER_FRAME_ANGLE
 
 vec = pg.math.Vector2
 
