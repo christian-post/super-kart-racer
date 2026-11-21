@@ -57,6 +57,7 @@ class AI_Kart(Kart):
         self.acc = vec()
 
         self.angle = start_angle
+        self.visual_angle = start_angle
         self.steer_yaw = 0.0
         self.turn_rate = 0.0  # rad/s, smoothed
         # player's turn rate at top speed -> full steering frames
@@ -66,6 +67,11 @@ class AI_Kart(Kart):
     @property
     def pos(self):
         return self.map_pos
+
+
+    @property
+    def display_angle(self):
+        return self.visual_angle
 
 
     def update_item(self, dt):
@@ -195,8 +201,10 @@ class AI_Kart(Kart):
         angle_change = (new_angle - self.angle + pi) % (2 * pi) - pi
         self.angle = new_angle
         # low-pass filter so small corrections don't flicker
-        smoothing = min(1.0, dt * 10)
-        self.turn_rate += (angle_change / dt - self.turn_rate) * smoothing
+        blend = 1 - exp(-dt * 4)  # lower = smoother
+        diff = (self.angle - self.visual_angle + pi) % (2 * pi) - pi
+        self.visual_angle += diff * blend
+        self.turn_rate += (angle_change / dt - self.turn_rate) * blend
         steer_frames = min(MAX_STEER_FRAMES,
                            round(abs(self.turn_rate) / self.max_turn_rate * MAX_STEER_FRAMES))
         steer_sign = 1 if self.turn_rate > 0 else -1

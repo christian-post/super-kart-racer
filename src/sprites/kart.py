@@ -89,6 +89,11 @@ class Kart(Billboard):
         return width
 
 
+    @property
+    def display_angle(self):
+        return self.angle
+
+
     def project(self):
         # pick the frame from viewing angle + steering, then project as usual
         camera = self.game.camera
@@ -97,7 +102,7 @@ class Kart(Billboard):
             view_angle = atan2(to_kart.y, to_kart.x)
         else:
             view_angle = camera.angle
-        yaw = self.angle - view_angle + self.steer_yaw
+        yaw = self.display_angle - view_angle + self.steer_yaw
         images, images_flipped = self.sheet_animation.current
         self.base_image = get_kart_frame(images, images_flipped, yaw)
         super().project()

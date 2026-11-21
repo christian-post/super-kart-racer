@@ -93,13 +93,13 @@ class Billboard(pg.sprite.Sprite):
             self.visible = False
             return
         depth = (mode7.far - mode7.near) / (frustum_dist - mode7.near)
-        ground_y = depth * screen_rect.h + horizon_offset
+        ground_y = round(depth * screen_rect.h + horizon_offset)
         row_width = 2 * frustum_dist * sin(mode7.fov_half)  # world units across screen
-        screen_x = (lateral / row_width + 0.5) * screen_rect.w
+        screen_x = round((lateral / row_width + 0.5) * screen_rect.w)
         scale = screen_rect.w / row_width
         self.screen_scale = scale
 
-        width = max(1, int(self.world_width * scale))
+        width = max(1, round(self.world_width * scale))
         if width > screen_rect.w * 2:  # too close, also keeps the cache small
             self.visible = False
             return
