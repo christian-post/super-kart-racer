@@ -1,13 +1,12 @@
 - framerate-independent game speed
 - replace the finish line with multiple sprites (side by side)
-- animate the player's wheels
 
 features:
 - item that shoots in front of you
 - a helicopter returns you to the track if you went into the deadzone (animation!)
 
 bugs:
-- 
+- fix jitter in camera orbit mode
 
 refactor:
 - logging instead of print
