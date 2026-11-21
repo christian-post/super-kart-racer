@@ -32,7 +32,8 @@ class AssetLoader(Scene):
             key = file.stem
             n = self.game.config["Assets.num_images"].get(key)
             if n is None:
-                raise KeyError(f"spritesheet key \"{key}\" missing from settings.toml")
+                print(f"Warning: spritesheet key \"{key}\" missing from settings.toml")
+                continue
             strip = pg.image.load(file).convert_alpha()
             frame_height = strip.get_height()  # spritesheets are just one row
             frame_width = strip.get_width() / n

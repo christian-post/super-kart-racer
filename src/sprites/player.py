@@ -22,7 +22,9 @@ class Player(Kart):
         self.acc = vec()
         self.vel = vec()
         self.pos = vec(2892.8, 1216.0)  # fallback if course has no start positions
-        self.speed = 1800
+        self.friction = self.game.config["Gameplay.friction"]
+        top_speed = self.game.config["Gameplay.player_top_speed"]
+        self.speed = top_speed * (1 - self.friction) / self.friction
         self.last_road_pos = vec(0, 0)  # last known position on road
         
         self.set_sheet(kart_name)  # base_image = current unscaled frame
@@ -145,7 +147,7 @@ class Player(Kart):
             
             self.acc *= 0
             # apply friction
-            self.vel *= 0.9
+            self.vel *= self.friction
 
             # self.game.debug_values['velocity'] = f'{self.vel.length():.2f}'
             
