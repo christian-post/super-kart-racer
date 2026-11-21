@@ -26,9 +26,11 @@ class AI_Kart(Kart):
         # player's terminal speed on road: v = friction * (v + speed / FPS)
         friction = game.config["Gameplay.friction"]
         player_top_speed = friction * game.player.speed / game.config["Video.fps"] / (1 - friction)
-        speed_factor = game.config["Gameplay.ai_speed_factor"]
-        self.base_max_speed = player_top_speed * speed_factor
-        self.max_speed = self.base_max_speed
+        # same throttle and friction as the player -> same acceleration curve and top speed
+        self.ai_speed_factor = game.config["Gameplay.ai_speed_factor"]
+        self.friction = game.player.friction
+        self.throttle = game.player.speed * self.ai_speed_factor
+        self.base_max_speed = player_top_speed * self.ai_speed_factor
         # force stays tied to base speed so handling doesn't change with variance
         self.max_force = game.config["Gameplay.ai_max_force"] * self.base_max_speed
 
@@ -108,8 +110,14 @@ class AI_Kart(Kart):
         desired = target - self.map_pos
         if desired.length_squared() == 0:
             return
-        desired.scale_to_length(self.max_speed)
+        if self.vel.length_squared() == 0:
+            return
+        desired.scale_to_length(self.vel.length())
         steer = (desired - self.vel) / self.steer_response_time
+        # sideways steering only, throttle and friction handle speed like for the player
+        heading = vec(cos(self.angle), sin(self.angle))
+        side = vec(-heading.y, heading.x)
+        steer = side * steer.dot(side)
         if steer.length() > self.max_force:
             steer.scale_to_length(self.max_force)
         self.acc += steer
@@ -143,10 +151,9 @@ class AI_Kart(Kart):
 
 
     def accelerate(self):
-        # throttle along the heading, steering alone doesn't speed up the kart
-        if self.vel.length() < self.max_speed:
-            heading = vec(cos(self.angle), sin(self.angle))
-            self.acc += heading * self.max_force
+        heading = vec(cos(self.angle), sin(self.angle))
+        ground_speed = self.game.ground_speed_at(self.map_pos)
+        self.acc += heading * self.throttle * ground_speed
 
 
     def update_speed_variance(self, dt):
@@ -159,7 +166,9 @@ class AI_Kart(Kart):
         # framerate independent exponential smoothing
         blend = 1 - exp(-self.speed_smoothing * dt)
         self.variance_factor += (self.target_variance_factor - self.variance_factor) * blend
-        self.max_speed = self.base_max_speed * self.variance_factor * self.speed_factor
+        # top speed scales linearly with throttle
+        self.throttle = (self.game.player.speed * self.ai_speed_factor
+                         * self.variance_factor * self.speed_factor)
 
 
     def update(self, dt):
@@ -171,13 +180,11 @@ class AI_Kart(Kart):
             self.follow_path()
             self.separate()
             self.accelerate()
+            
             self.vel += self.acc * dt
-            if self.vel.length() > self.max_speed:
-                self.vel.scale_to_length(self.max_speed)
-
             self.map_pos += self.vel * dt
             self.acc *= 0
-            self.update_steering(dt)
+            self.vel *= self.friction
 
 
     def update_steering(self, dt):
