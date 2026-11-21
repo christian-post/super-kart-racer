@@ -126,7 +126,8 @@ class Race(Scene):
             self.game.switch_scene("CourseSelect")
         elif event.key == pg.K_RETURN and self.phase == RacePhase.FINISHED:
             self.game.switch_scene("CourseSelect")
-        elif event.key == pg.K_i and self.phase == RacePhase.RACING:
+        elif (event.key == pg.K_i and self.phase == RacePhase.RACING
+              and not self.player.is_rescued):
             self.player.use_item()
             
         # Debug functions
@@ -259,9 +260,13 @@ class Race(Scene):
         self.blit_scrolling(screen, self.game.mountains, self.game.config["Visuals.mountain_scroll_rate"], self.game.mountains_y)
         self.map.draw(screen)
         # world sprites far to near, then screen sprites (traffic light, particles)
-        for billboard in sorted(self.game.billboards, key=lambda b: b.depth, reverse=True):
+        billboards = sorted(self.game.billboards, key=lambda b: b.depth, reverse=True)
+        # shadows lie on the floor, so they go below every billboard
+        for billboard in billboards:
+            billboard.draw_shadow(screen)
+        for billboard in billboards:
             billboard.draw(screen)
-
+            
         # draw particles seperately with draw order (closer = drawn later)
         particles = [sprite for sprite in self.game.all_sprites if isinstance(sprite, Particle)]
         for particle in sorted(particles, key=lambda particle: particle.pos.y):

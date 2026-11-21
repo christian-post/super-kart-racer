@@ -111,4 +111,5 @@ class Kart(Billboard):
     def draw(self, screen):
         # image can be smaller than rect (shrink), keep it on the ground
         if self.visible:
-            screen.blit(self.image, self.image.get_rect(midbottom=self.rect.midbottom))
+            bottom = self.rect.bottom - self.height_offset
+            screen.blit(self.image, self.image.get_rect(midbottom=(self.rect.centerx, bottom)))

@@ -1,8 +1,9 @@
 import pygame as pg
-from math import sin, cos
+from math import sin, cos, atan2
 from random import uniform
 
 from src.sprites.kart import Kart, Direction, MAX_STEER_FRAMES, STEER_FRAME_ANGLE
+from src.sprites.helicopter import Helicopter
 from src.particle import Particle
 
 vec = pg.math.Vector2
@@ -42,6 +43,7 @@ class Player(Kart):
         self.fire_timer = 0
 
         self.item = None  # held item
+        self.helicopter = None  # set while being carried back to the road
         
     
     def update(self, dt):
@@ -79,7 +81,7 @@ class Player(Kart):
                         )
                     self.dust_timer = 0
             
-        else:
+        elif not self.is_rescued:
             if self.moving == 1:
                 turn_force = 0.00625 # how much the angle changes when turning
             else:
@@ -156,7 +158,6 @@ class Player(Kart):
                 self.rect.top = 85
             else:
                 self.rect.top = 84
-                
             
             # create dust clouds when steering
             self.dust_timer += dt
@@ -223,14 +224,26 @@ class Player(Kart):
                         end_size=1.4
                         )
 
-
         # check against the killzone
-        if self.game.check_in_killzone(self.pos):
-            # warp back to last known road position
-            # TODO: trigger event with animation and stuff
-            print("Dead")
-            self.pos.x = self.last_road_pos.x
-            self.pos.y = self.last_road_pos.y
+        if not self.is_rescued and self.game.check_in_killzone(self.pos):
+            # helicopter carries the kart back to the last road position
+            drop_pos, drop_angle = self.find_drop_position()
+            self.helicopter = Helicopter(self.game, self, drop_pos, drop_angle)
+
+
+    def find_drop_position(self):
+        # nearest point on the AI path, facing along it
+        course = self.game.course
+        nearest = course.nearest_path_point(self.last_road_pos) if course else None
+        if nearest is None:
+            return vec(self.last_road_pos), self.angle
+        point, direction = nearest
+        return point, atan2(direction.y, direction.x)
+
+
+    @property
+    def is_rescued(self):
+        return self.helicopter is not None
 
 
     def emit_turbo_fire(self, dt):

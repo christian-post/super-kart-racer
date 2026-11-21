@@ -102,6 +102,30 @@ class Course:
     def get_start_position(self, number):
         return self.start_positions.get(number)
 
+
+    def nearest_path_point(self, pos):
+        # closest point on the closed AI path + driving direction there, None without path
+        best_point = None
+        best_direction = None
+        best_distance_squared = float("inf")
+        count = len(self.path_points)
+        for index in range(count if count > 1 else 0):
+            segment_start = self.path_points[index]
+            segment = self.path_points[(index + 1) % count] - segment_start
+            if segment.length_squared() == 0:
+                continue
+            projection = (pos - segment_start).dot(segment) / segment.length_squared()
+            projection = max(0.0, min(1.0, projection))
+            point = segment_start + segment * projection
+            distance_squared = pos.distance_squared_to(point)
+            if distance_squared < best_distance_squared:
+                best_distance_squared = distance_squared
+                best_point = point
+                best_direction = segment.normalize()
+        if best_point is None:
+            return None
+        return best_point, best_direction
+
     # --- tilemap queries ---
 
     def _tile_at(self, grid, pos, outside_value):

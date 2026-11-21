@@ -9,3 +9,4 @@ from src.sprites.ai_kart import AI_Kart
 from src.sprites.player import Player
 from src.sprites.oil_spill import OilSpill
 from src.sprites.traffic_light import TrafficLight
+from src.sprites.helicopter import Helicopter

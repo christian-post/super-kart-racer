@@ -17,7 +17,8 @@ num_images = {
 }
 animation_fps = {
     flag = 8,
-    itembox = 4
+    itembox = 4,
+    helicopter = 16
 }
 bg_scale_factors = {
     cloudy_sky = 0.2,
@@ -49,6 +50,11 @@ speed_lines_min_length = 15
 speed_lines_max_length = 35
 speed_lines_width = 2
 speed_lines_alpha = 160
+shadow_alpha = 90
+shadow_width = 0.8          # relative to the sprite width
+shadow_squash = 0.3         # ellipse height / width
+shadow_min_size = 0.4       # smallest shadow size factor
+shadow_fade_height = 80     # world units where the shadow reaches min size
 
 [Hud]
 font_sizes = [8, 24]
@@ -113,6 +119,20 @@ oil = [6, 4, 1, 0]
 turbo = [1, 4, 5, 4]
 maxturbo = [0, 0, 3, 6]
 shrink = [0, 0, 2, 8]
+
+[Helicopter]
+spawn_distance = 160        # world units in front of the camera
+spawn_height = 80
+approach_duration = 1.0
+lift_duration = 0.4
+lift_height = 24            # kart height while carried
+carry_speed = 240           # world units/s
+min_carry_duration = 1.0
+drop_duration = 0.4
+leave_duration = 1.5
+leave_height = 100
+bob_amplitude = 1.5         # world units
+bob_speed = 5.0             # rad/s
 
 [Debug]
 font_size = 16

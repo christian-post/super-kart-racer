@@ -13,6 +13,9 @@ class Billboard(pg.sprite.Sprite):
     base_images = {}  # name -> surface
     scaled_images = {}  # (name, width) -> surface
     subclasses_by_tiled_name = {}  # filled by __init_subclass__
+    shadow_images = {}  # (width, height) -> surface
+    height = 0.0  # world units above the ground
+    screen_scale = 1.0  # screen px per world unit, set in project()
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -68,6 +71,9 @@ class Billboard(pg.sprite.Sprite):
             # fixed kart spot, no jitter
             self.image = self.base_image
             self.depth = mode7.kart_ground_distance()
+            frustum_dist = self.depth / cos(mode7.fov_half)
+            row_width = 2 * frustum_dist * sin(mode7.fov_half)
+            self.screen_scale = self.game.game_screen_rect.w / row_width
             self.visible = True
             return
         screen_rect = self.game.game_screen_rect
@@ -91,16 +97,45 @@ class Billboard(pg.sprite.Sprite):
         row_width = 2 * frustum_dist * sin(mode7.fov_half)  # world units across screen
         screen_x = (lateral / row_width + 0.5) * screen_rect.w
         scale = screen_rect.w / row_width
+        self.screen_scale = scale
 
         width = max(1, int(self.world_width * scale))
         if width > screen_rect.w * 2:  # too close, also keeps the cache small
             self.visible = False
             return
         self.image = self.get_scaled_image(width)
+        # rect stays on the ground, height is applied when drawing
         self.rect = self.image.get_rect(midbottom=(screen_x, ground_y))
-        self.visible = self.rect.colliderect(screen_rect)
+        elevated_rect = self.rect.move(0, -self.height_offset)
+        self.visible = (self.rect.colliderect(screen_rect)
+                        or elevated_rect.colliderect(screen_rect))
+
+
+    @property
+    def height_offset(self):
+        # screen px between the ground point and the sprite bottom
+        return round(self.height * self.screen_scale)
+
+
+    def draw_shadow(self, screen):
+        # dark ellipse on the floor below an elevated billboard
+        if not self.visible or self.height <= 0:
+            return
+        config = self.game.config
+        # shadow gets smaller the higher the sprite is
+        size_factor = max(config["Visuals.shadow_min_size"],
+                          1 - self.height / config["Visuals.shadow_fade_height"])
+        shadow_width = max(2, round(self.image.get_width() * config["Visuals.shadow_width"] * size_factor))
+        shadow_height = max(1, round(shadow_width * config["Visuals.shadow_squash"]))
+        key = (shadow_width, shadow_height)
+        if key not in Billboard.shadow_images:
+            shadow = pg.Surface(key, pg.SRCALPHA)
+            pg.draw.ellipse(shadow, (0, 0, 0, config["Visuals.shadow_alpha"]), shadow.get_rect())
+            Billboard.shadow_images[key] = shadow
+        shadow = Billboard.shadow_images[key]
+        screen.blit(shadow, shadow.get_rect(center=self.rect.midbottom))
 
 
     def draw(self, screen):
         if self.visible:
-            screen.blit(self.image, self.rect)
+            screen.blit(self.image, self.rect.move(0, -self.height_offset))

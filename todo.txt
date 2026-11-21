@@ -3,7 +3,6 @@
 
 features:
 - item that shoots in front of you
-- a helicopter returns you to the track if you went into the deadzone (animation!)
 
 bugs:
 - fix jitter in camera orbit mode
