@@ -64,6 +64,7 @@ class Game:
         self.camera = None
         self.course = None
         self.map = None
+        self.shrink_effects = None
         self.started = False  # if the race has started (starts after green light)
 
         # scene stack: top scene gets events/updates,

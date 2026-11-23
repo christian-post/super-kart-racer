@@ -55,6 +55,17 @@ shadow_width = 0.8          # relative to the sprite width
 shadow_squash = 0.3         # ellipse height / width
 shadow_min_size = 0.4       # smallest shadow size factor
 shadow_fade_height = 80     # world units where the shadow reaches min size
+lightning_duration = 0.35           # seconds the shrink lightning is visible
+lightning_flicker_interval = 0.05   # seconds between new bolt shapes
+lightning_segments = 8
+lightning_jitter = 6                # px sideways per bolt segment
+lightning_flash_alpha = 180         # white screen flash at the strike
+lightning_glow_color = [150, 190, 255]
+shrink_tint_color_a = [170, 60, 255]
+shrink_tint_color_b = [60, 220, 255]
+shrink_tint_alpha = 70
+shrink_tint_speed = 4.0             # wobble speed (rad/s)
+shrink_tint_fade = 0.4              # fade in/out seconds
 
 [Hud]
 font_sizes = [8, 24]

@@ -3,10 +3,12 @@
 
 features:
 - item that shoots in front of you
+- lightning effect when using the shrink item
 
 bugs:
-- fix jitter in camera orbit mode
+- 
 
 refactor:
 - logging instead of print
+- unify visual effects (currently: speed lines and shrink)
 

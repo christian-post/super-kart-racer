@@ -13,6 +13,7 @@ from src.standings import RaceStandings
 from src.hud import HUD, LAP_COMPLETED
 from src.particle import Particle
 from src.speed_lines import SpeedLines
+from src.shrink_effects import ShrinkEffects
 import src.utils as utils
 
 
@@ -50,6 +51,7 @@ class Race(Scene):
         self.num_checkpoints = 0
         self.standings = None
         self.speed_lines = None
+        self.shrink_effects = None
 
 
     def startup(self):
@@ -110,6 +112,7 @@ class Race(Scene):
         # HUD reads lap/time/player/course from the race scene
         self.hud = HUD(self, self.course.tiled_map if self.course else None)
         self.speed_lines = SpeedLines(self.game)
+        self.shrink_effects = self.game.shrink_effects = ShrinkEffects(self.game)
 
 
     def cleanup(self):
@@ -135,6 +138,9 @@ class Race(Scene):
             self.player.apply_effect("maxturbo")
         elif event.key == pg.K_y:  # debug: oil
             OilSpill(self.game, self.player)
+        elif event.key == pg.K_u:  # debug: shrink the player
+            self.player.apply_effect("shrink")
+            self.shrink_effects.trigger_lightning([self.player])
         elif event.key == pg.K_c:  # debug: toggle camera mode
             if isinstance(self.camera.mode, OrbitMode):
                 self.camera.set_mode(FollowMode())
@@ -221,6 +227,8 @@ class Race(Scene):
         self.camera.update(dt)
         for billboard in self.game.billboards:
             billboard.project()
+        # after project(), bolts aim at the current kart rects
+        self.shrink_effects.update(dt, self.player)
 
         # debugging
         self.game.debug_values["phase"] = self.phase.name
@@ -277,6 +285,7 @@ class Race(Scene):
                 sprite.draw(screen)
 
         self.speed_lines.draw(screen)
+        self.shrink_effects.draw(screen)
 
         if self.phase in [RacePhase.COUNTDOWN, RacePhase.RACING]:
             self.hud.draw(screen)

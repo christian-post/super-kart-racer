@@ -85,7 +85,7 @@ class Helicopter(Billboard):
     @property
     def hang_distance(self):
         # kart top hangs at the skids
-        return self.kart.base_image.get_height() * self.world_units_per_pixel
+        return self.kart.base_image.get_height() * self.world_units_per_pixel - 1  # hard coded offset, TODO add to config
 
 
     def start_phase(self, phase):

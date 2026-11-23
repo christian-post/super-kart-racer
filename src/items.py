@@ -38,9 +38,11 @@ class Shrink(Item):
 
     def use(self, game, kart):
         # every kart except the user
-        for sprite in game.billboards:
-            if isinstance(sprite, Kart) and sprite is not kart:
-                sprite.apply_effect("shrink")
+        victims = [sprite for sprite in game.billboards
+                   if isinstance(sprite, Kart) and sprite is not kart]
+        for victim in victims:
+            victim.apply_effect("shrink")
+        game.shrink_effects.trigger_lightning(victims)
 
 
 ITEM_TYPES = {item.name: item for item in (Turbo, Maxturbo, Oil, Shrink)}
