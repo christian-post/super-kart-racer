@@ -80,8 +80,8 @@ class ItemBox(Billboard):
 
     def collect(self, kart):
         # box breaks either way, item only if the slot is empty
-        if kart.item is None:
-            standings = self.game.scene_stack[-1].standings  # TODO refactor to not access scene directly
+        standings = self.game.standings
+        if kart.item is None and standings is not None:
             position = standings.position_of(kart)
             kart.item = random_item(self.game, position, len(standings.karts))
         self.time_until_respawn = self.respawn_time

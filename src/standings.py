@@ -26,6 +26,8 @@ class RaceStandings:
         self.laps = {}
         self.progress = {}       # laps * path_length + distance past the finish line
         self.finish_order = []
+        self.elapsed_time = 0.0  # runs on after the player finishes, for AI finish times
+        self.finish_times = {}   # kart -> total race time
 
 
     def distance_along_path(self, pos):
@@ -61,7 +63,8 @@ class RaceStandings:
         self.progress[kart] = self.laps[kart] * self.path_length + distance
 
 
-    def update(self):
+    def update(self, dt):
+        self.elapsed_time += dt
         half_length = self.path_length / 2
         for kart in self.karts:
             distance = self.distance_past_finish(kart.map_pos)
@@ -81,6 +84,7 @@ class RaceStandings:
     def mark_finished(self, kart):
         if kart not in self.finish_order:
             self.finish_order.append(kart)
+            self.finish_times[kart] = self.elapsed_time
 
 
     def replace_kart(self, old_kart, new_kart):
@@ -91,6 +95,8 @@ class RaceStandings:
             self.finish_order[self.finish_order.index(old_kart)] = new_kart
         for table in (self.auto_finish, self.last_distance, self.laps, self.progress):
             table[new_kart] = table.pop(old_kart)
+        if old_kart in self.finish_times:
+            self.finish_times[new_kart] = self.finish_times.pop(old_kart)
 
 
     def ranking(self):

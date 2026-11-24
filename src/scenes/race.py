@@ -64,6 +64,7 @@ class Race(Scene):
         self.game.billboards = pg.sprite.Group()
         self.game.started = False
         self.game.course = None
+        self.game.standings = None
 
         try:
             self.course = Course(
@@ -108,7 +109,7 @@ class Race(Scene):
                 finish = next((c for c in self.checkpoints if c.name == "finish"), None)
                 if finish is not None:
                     finish_center = sum((vec(p) for p in finish.points), vec()) / len(finish.points)
-                    self.standings = RaceStandings(
+                    self.standings = self.game.standings = RaceStandings(
                         self.course.path_points,
                         finish_center, self.course.max_laps
                         )
@@ -133,9 +134,18 @@ class Race(Scene):
         if event.type != pg.KEYDOWN:
             return
         if event.key == pg.K_ESCAPE:
-            self.game.switch_scene("CourseSelect")
+            if self.mode == GameMode.GRAND_PRIX:
+                self.game.grand_prix = None
+                self.game.switch_scene("ModeSelect")
+            else:
+                self.game.switch_scene("CourseSelect")
         elif event.key == pg.K_RETURN and self.phase == RacePhase.FINISHED:
-            self.game.switch_scene("CourseSelect")
+            if self.mode == GameMode.GRAND_PRIX:
+                ranking = self.standings.ranking() if self.standings else [self.player]
+                self.game.grand_prix.add_race_results([kart.name for kart in ranking])
+                self.game.push_scene("GrandPrixResults", race=self)
+            else:
+                self.game.switch_scene("CourseSelect")
         elif (event.key == pg.K_i and self.phase == RacePhase.RACING
               and self.mode.has_items and not self.player.is_rescued):
             self.player.use_item()
@@ -207,7 +217,7 @@ class Race(Scene):
             self.game.all_sprites.update(dt)
             self.game.billboards.update(dt)
             if self.standings:
-                self.standings.update()
+                self.standings.update(dt)
             self.speed_lines.update(dt, self.player.speed_factor)
 
             self.check_lap_progress()
@@ -228,7 +238,7 @@ class Race(Scene):
             self.game.all_sprites.update(dt)
             self.speed_lines.update(dt, 0.0)  # get rid of the effect
             if self.standings:
-                self.standings.update()  # AI karts still finish behind the player
+                self.standings.update(dt)  # AI karts still finish behind the player
             for billboard in self.game.billboards:
                 if not isinstance(billboard, Player):
                     billboard.update(dt)
@@ -300,68 +310,110 @@ class Race(Scene):
         if self.phase in [RacePhase.COUNTDOWN, RacePhase.RACING]:
             self.hud.draw(screen)
 
-        elif self.phase == RacePhase.FINISHED:
-            # Draw placement, finishing times etc.
+        elif self.phase == RacePhase.FINISHED and self.game.scene_stack[-1] is self:
             shade = pg.Surface(screen.get_size(), pg.SRCALPHA)
             shade.fill((0, 0, 0, 140))
             screen.blit(shade, (0, 0))
 
             center_x = screen.get_width() // 2
             line_height = 12
-            y = 40
+            self.draw_text(screen, "FINISH!", (center_x, 40), "yellow")
 
-            # caption
-            self.draw_text(screen, "FINISH!", (center_x, y), "yellow")
-
-            # in Time Trial mode, check if you beat the current record
-            record_types = []
-            if self.new_race_record:
-                record_types.append("COURSE")
-            if self.new_lap_record:
-                record_types.append("LAP")
-            if record_types:
-                new_record_line = f"NEW {' & '.join(record_types)} RECORD!"
-                self.draw_text(screen, new_record_line, (center_x, y + line_height), "red")
-
-            total_line = f"Total {HUD.format_time(self.race_time)}"
-            lap_lines = [f"Lap {lap} {HUD.format_time(t)}" for lap, t in enumerate(self.lap_times, start=1)]
-            star_image = self.game.assets["sprites"]["star"]
-            text_width = max(self.game.font.size(line)[0] for line in [total_line] + lap_lines)
-            text_x = center_x - text_width // 2
-
-
+            # no standings in time trial (or on courses without AI path) -> lap list
             if self.standings:
-                position = self.standings.position_of(self.player)
-                self.draw_text(screen, f"POS {position}/{len(self.standings.karts)}",
-                               (center_x, 52))
+                bottom = self.draw_standings_results(screen, 52)
+            else:
+                bottom = self.draw_lap_results(screen, 52)
 
-            y = 65
-            self.draw_text(screen, total_line, (text_x, y), anchor="midleft")
-            box_margin_top = 3
-            y += line_height + box_margin_top
+            self.draw_text(screen, "Enter: continue", (center_x, bottom + line_height))
 
-            # scrolling lap list box, only a few laps visible at a time
-            visible_laps = self.game.config["Hud.finish_visible_laps"]
-            box_padding_top = 1
-            box_padding_bottom = 1
-            box_rect = pg.Rect(0, 0,
-                               text_width + star_image.get_width() + 2 + box_padding_top * 2,
-                               min(len(lap_lines), visible_laps) * line_height + box_padding_top + box_padding_bottom)
-            box_rect.midtop = (center_x + (star_image.get_width() + 2) // 2, y - line_height // 2 - box_padding_top)
-            scroll_offset = self.get_results_scroll_offset(len(lap_lines), visible_laps, line_height)
-            previous_clip = screen.get_clip()
-            screen.set_clip(box_rect)
 
-            fastest_lap_index = self.lap_times.index(min(self.lap_times))
-            lap_y = y - scroll_offset
-            for index, line in enumerate(lap_lines):
-                color = "gold" if index == fastest_lap_index else "white"
-                line_rect = self.draw_text(screen, line, (text_x, lap_y), color, anchor="midleft")
-                if index == fastest_lap_index:
-                    star_rect = star_image.get_rect(midleft=(line_rect.right + 2, line_rect.centery))
-                    screen.blit(star_image, star_rect)
-                lap_y += line_height
+    def draw_standings_results(self, screen, top):
+        # one row per kart: position, icon, total time, gap to the winner
+        row_height = 19
+        column_gap = 4
+        icons = self.game.assets["spritesheets"]["kart_icons"]
+        icon_width = icons[0].get_width()
+        position_width = self.game.font.size("0.")[0]
+        time_width = self.game.font.size("00:00.00")[0]
+        gap_width = self.game.font.size("+00:00.00")[0]
+        row_width = position_width + icon_width + time_width + gap_width + 3 * column_gap
 
-            screen.set_clip(previous_clip)
+        position_x = (screen.get_width() - row_width) // 2
+        icon_x = position_x + position_width + column_gap
+        time_x = icon_x + icon_width + column_gap
+        gap_x = time_x + time_width + column_gap
 
-            self.draw_text(screen, "Enter: continue", (center_x, box_rect.bottom + line_height))
+        finish_times = self.standings.finish_times
+        winner_time = finish_times[self.standings.finish_order[0]]  # player has finished
+
+        y = top
+        for position, kart in enumerate(self.standings.ranking(), start=1):
+            center_y = y + row_height // 2
+            color = "yellow" if kart is self.player else "white"
+            self.draw_text(screen, f"{position}.", (position_x, center_y), color, anchor="midleft")
+            icon = icons[int(kart.name.removeprefix("kart")) - 1]
+            screen.blit(icon, icon.get_rect(midleft=(icon_x, center_y)))
+
+            finish_time = finish_times.get(kart)
+            if finish_time is None:  # still racing
+                self.draw_text(screen, "--:--.--", (time_x, center_y), "gray60", anchor="midleft")
+            else:
+                self.draw_text(screen, HUD.format_time(finish_time), (time_x, center_y),
+                               color, anchor="midleft")
+                if position > 1:
+                    gap_text = f"+{HUD.format_time(finish_time - winner_time)}"
+                    self.draw_text(screen, gap_text, (gap_x, center_y), color, anchor="midleft")
+            y += row_height
+        return y
+
+
+    def draw_lap_results(self, screen, top):
+        center_x = screen.get_width() // 2
+        line_height = 12
+
+        # time trial: check if you beat the current record
+        record_types = []
+        if self.new_race_record:
+            record_types.append("COURSE")
+        if self.new_lap_record:
+            record_types.append("LAP")
+        if record_types:
+            new_record_line = f"NEW {' & '.join(record_types)} RECORD!"
+            self.draw_text(screen, new_record_line, (center_x, top), "red")
+
+        total_line = f"Total {HUD.format_time(self.race_time)}"
+        lap_lines = [f"Lap {lap} {HUD.format_time(t)}" for lap, t in enumerate(self.lap_times, start=1)]
+        star_image = self.game.assets["sprites"]["star"]
+        text_width = max(self.game.font.size(line)[0] for line in [total_line] + lap_lines)
+        text_x = center_x - text_width // 2
+
+        y = top + line_height + 1
+        self.draw_text(screen, total_line, (text_x, y), anchor="midleft")
+        box_margin_top = 3
+        y += line_height + box_margin_top
+
+        # scrolling lap list box, only a few laps visible at a time
+        visible_laps = self.game.config["Hud.finish_visible_laps"]
+        box_padding_top = 1
+        box_padding_bottom = 1
+        box_rect = pg.Rect(0, 0,
+                           text_width + star_image.get_width() + 2 + box_padding_top * 2,
+                           min(len(lap_lines), visible_laps) * line_height + box_padding_top + box_padding_bottom)
+        box_rect.midtop = (center_x + (star_image.get_width() + 2) // 2, y - line_height // 2 - box_padding_top)
+        scroll_offset = self.get_results_scroll_offset(len(lap_lines), visible_laps, line_height)
+        previous_clip = screen.get_clip()
+        screen.set_clip(box_rect)
+
+        fastest_lap_index = self.lap_times.index(min(self.lap_times))
+        lap_y = y - scroll_offset
+        for index, line in enumerate(lap_lines):
+            color = "gold" if index == fastest_lap_index else "white"
+            line_rect = self.draw_text(screen, line, (text_x, lap_y), color, anchor="midleft")
+            if index == fastest_lap_index:
+                star_rect = star_image.get_rect(midleft=(line_rect.right + 2, line_rect.centery))
+                screen.blit(star_image, star_rect)
+            lap_y += line_height
+
+        screen.set_clip(previous_clip)
+        return box_rect.bottom

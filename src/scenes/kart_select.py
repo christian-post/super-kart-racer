@@ -3,6 +3,9 @@ import pygame as pg
 
 from src.scenes.scene import Scene
 from src.sprites import get_kart_frame
+from src.game_mode import GameMode
+from src.grand_prix import GrandPrix
+from src.course import find_course_names
 
 
 class KartSelect(Scene):
@@ -30,8 +33,13 @@ class KartSelect(Scene):
             self.selected_index = (self.selected_index + 1) % kart_count
             self.spin_angle = 0.0
         elif event.key in (pg.K_RETURN, pg.K_SPACE):
-            self.game.switch_scene("Race", course_name=self.course_name,
-                                   kart_name=self.game.kart_names[self.selected_index])
+            kart_name = self.game.kart_names[self.selected_index]
+            course_name = self.course_name
+            if self.game.mode == GameMode.GRAND_PRIX:
+                self.game.grand_prix = GrandPrix(find_course_names(self.game.assets_folder),
+                                                 self.game.kart_names, kart_name)
+                course_name = self.game.grand_prix.current_course_name
+            self.game.switch_scene("Race", course_name=course_name, kart_name=kart_name)
 
 
     def update(self, dt):

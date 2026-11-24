@@ -24,7 +24,10 @@ class ModeSelect(Scene):
             mode = self.modes[self.selected_index]
             if mode.is_available:
                 self.game.mode = mode
-                self.game.switch_scene("CourseSelect")
+                if mode == GameMode.GRAND_PRIX:
+                    self.game.switch_scene("KartSelect")
+                else:
+                    self.game.switch_scene("CourseSelect")
 
 
     def draw(self, screen):

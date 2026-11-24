@@ -11,4 +11,6 @@ bugs:
 refactor:
 - logging instead of print
 - unify visual effects (currently: speed lines and shrink)
+- POINTS_BY_POSITION into config.toml
+
 

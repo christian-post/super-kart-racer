@@ -72,6 +72,8 @@ class Game:
         self.shrink_effects = None
         self.started = False  # if the race has started (starts after green light)
         self.mode = GameMode.SINGLE_RACE  # set by the ModeSelect scene
+        self.grand_prix = None  # set by KartSelect scene in grand prix mode
+        self.standings = None
 
         # scene stack: top scene gets events/updates,
         # transparent scenes also draw the scene below them

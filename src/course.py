@@ -144,3 +144,7 @@ class Course:
 
     def in_killzone(self, pos):
         return self._tile_at(self.killzone_grid, pos, True)
+
+def find_course_names(assets_folder):
+    # every .tmx file in the courses folder is a course
+    return sorted(f.stem for f in Path(assets_folder, "courses").glob("*.tmx"))

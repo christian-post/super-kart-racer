@@ -8,7 +8,8 @@ class GameMode(Enum):
 
     @property
     def is_available(self):
-        return self != GameMode.GRAND_PRIX  # TODO grand prix not implemented yet
+        # TODO: used for unfinished game modes
+        return True
 
     @property
     def has_opponents(self):
