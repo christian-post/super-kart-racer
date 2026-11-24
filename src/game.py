@@ -5,6 +5,7 @@ import pygame as pg
 from src.scenes import SCENES
 from src.config import Config
 from src.game_mode import GameMode
+from src.records import Records
 
 vec = pg.math.Vector2
 
@@ -23,6 +24,9 @@ class Game:
             Path(base_dir, "..", "settings.toml"),
             Path(base_dir, "..", "settings.example.toml"),
             Path(base_dir, "..", "config.toml"))
+
+        # time trial records
+        self.records = Records(Path(base_dir, "..", "records.dat"))
 
         # debugging
         self.debug_font = pg.font.SysFont('consolas', self.config["Debug.font_size"])

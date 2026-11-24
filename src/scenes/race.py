@@ -14,6 +14,7 @@ from src.hud import HUD, LAP_COMPLETED
 from src.particle import Particle
 from src.speed_lines import SpeedLines
 from src.shrink_effects import ShrinkEffects
+from src.game_mode import GameMode
 import src.utils as utils
 
 
@@ -38,6 +39,8 @@ class Race(Scene):
         self.race_time = 0.0
         self.lap_start_time = 0.0
         self.lap_times = []  # store all lap times
+        self.new_race_record = False  # set on finish in time trial
+        self.new_lap_record = False
         self.results_scroll_time = 0.0  # lap list scrolling on the finish screen
         self.current_lap = 1
         self.current_checkpoint = 0
@@ -212,6 +215,9 @@ class Race(Scene):
                 self.phase = RacePhase.FINISHED
                 if self.standings:
                     self.standings.mark_finished(self.player)
+                if self.mode == GameMode.TIME_TRIAL:
+                    self.new_race_record, self.new_lap_record = self.game.records.submit(
+                        self.course_name, self.kart_name, self.race_time, self.lap_times)
                 # replace player with AI kart
                 self.hand_player_to_ai()
                 self.camera.set_mode(OrbitMode(speed=self.game.config["Visuals.camera_orbit_speed"]))
@@ -295,12 +301,27 @@ class Race(Scene):
             self.hud.draw(screen)
 
         elif self.phase == RacePhase.FINISHED:
+            # Draw placement, finishing times etc.
             shade = pg.Surface(screen.get_size(), pg.SRCALPHA)
             shade.fill((0, 0, 0, 140))
             screen.blit(shade, (0, 0))
 
             center_x = screen.get_width() // 2
             line_height = 12
+            y = 40
+
+            # caption
+            self.draw_text(screen, "FINISH!", (center_x, y), "yellow")
+
+            # in Time Trial mode, check if you beat the current record
+            record_types = []
+            if self.new_race_record:
+                record_types.append("COURSE")
+            if self.new_lap_record:
+                record_types.append("LAP")
+            if record_types:
+                new_record_line = f"NEW {' & '.join(record_types)} RECORD!"
+                self.draw_text(screen, new_record_line, (center_x, y + line_height), "red")
 
             total_line = f"Total {HUD.format_time(self.race_time)}"
             lap_lines = [f"Lap {lap} {HUD.format_time(t)}" for lap, t in enumerate(self.lap_times, start=1)]
@@ -308,7 +329,7 @@ class Race(Scene):
             text_width = max(self.game.font.size(line)[0] for line in [total_line] + lap_lines)
             text_x = center_x - text_width // 2
 
-            self.draw_text(screen, "FINISH!", (center_x, 40), "yellow")
+
             if self.standings:
                 position = self.standings.position_of(self.player)
                 self.draw_text(screen, f"POS {position}/{len(self.standings.karts)}",
@@ -319,7 +340,7 @@ class Race(Scene):
             box_margin_top = 3
             y += line_height + box_margin_top
 
-            # lap list box, only a few laps visible at a time
+            # scrolling lap list box, only a few laps visible at a time
             visible_laps = self.game.config["Hud.finish_visible_laps"]
             box_padding_top = 1
             box_padding_bottom = 1

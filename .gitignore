@@ -105,6 +105,8 @@ venv.bak/
 
 .vscode/*
 
+# project-specific
 settings.toml
-
 screenshots/*.png
+records.dat
+records.tmp

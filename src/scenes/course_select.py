@@ -2,6 +2,8 @@ from pathlib import Path
 import pygame as pg
 
 from src.scenes.scene import Scene
+from src.game_mode import GameMode
+from src.hud import HUD
 
 
 class CourseSelect(Scene):
@@ -43,3 +45,17 @@ class CourseSelect(Scene):
             label = f"> {course_name} <" if is_selected else course_name
             color = "yellow" if is_selected else "white"
             self.draw_text(screen, label, (center_x, 50 + index * 14), color)
+
+        if self.game.mode == GameMode.TIME_TRIAL:
+            self.draw_best_times(screen, self.courses[self.selected_index])
+
+
+    def draw_best_times(self, screen, course_name):
+        center_x = screen.get_width() // 2
+        bottom = screen.get_height() - 10
+        race_time = self.game.records.best_time(course_name, "race")
+        lap_time = self.game.records.best_time(course_name, "lap")
+        race_text = HUD.format_time(race_time) if race_time is not None else "--:--.--"
+        lap_text = HUD.format_time(lap_time) if lap_time is not None else "--:--.--"
+        self.draw_text(screen, f"BEST {race_text}", (center_x, bottom - 12), "gold")
+        self.draw_text(screen, f"LAP  {lap_text}", (center_x, bottom), "gold")
