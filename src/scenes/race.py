@@ -31,6 +31,7 @@ class Race(Scene):
         super().__init__(game)
         self.course_name = course_name
         self.kart_name = kart_name
+        self.mode = game.mode
         self.phase = RacePhase.COUNTDOWN
 
         # read by HUD
@@ -84,11 +85,14 @@ class Race(Scene):
                 (obj.properties.get("number", 0) for obj in self.checkpoints), default=0)
             
             for obj in self.course.game_object_data.get("sprites", []):
-                if obj.type == "billboard":
-                    create_billboard(self.game, obj)
+                if obj.type != "billboard":
+                    continue
+                if obj.name == "itembox" and not self.mode.has_items:
+                    continue
+                create_billboard(self.game, obj)
                     
             # AI karts on grid positions 1-3, all karts the player didn't pick
-            if len(self.course.path_points) > 1:
+            if len(self.course.path_points) > 1 and self.mode.has_opponents:
                 ai_kart_names = [name for name in self.game.kart_names
                                  if name != self.kart_name]
                 for position, kart_name in enumerate(ai_kart_names, start=1):
@@ -130,7 +134,7 @@ class Race(Scene):
         elif event.key == pg.K_RETURN and self.phase == RacePhase.FINISHED:
             self.game.switch_scene("CourseSelect")
         elif (event.key == pg.K_i and self.phase == RacePhase.RACING
-              and not self.player.is_rescued):
+              and self.mode.has_items and not self.player.is_rescued):
             self.player.use_item()
             
         # Debug functions

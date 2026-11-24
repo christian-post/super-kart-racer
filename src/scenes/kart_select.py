@@ -22,7 +22,7 @@ class KartSelect(Scene):
             return
         kart_count = len(self.game.kart_names)
         if event.key == pg.K_ESCAPE:
-            self.game.switch_scene("CourseSelect")
+            self.game.switch_scene("ModeSelect")
         elif event.key in (pg.K_a, pg.K_LEFT):
             self.selected_index = (self.selected_index - 1) % kart_count
             self.spin_angle = 0.0

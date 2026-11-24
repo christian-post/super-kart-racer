@@ -10,7 +10,7 @@ class TitleScreen(Scene):
 
     def get_event(self, event):
         if event.type == pg.KEYDOWN and event.key != pg.K_F1:
-            self.game.switch_scene("CourseSelect")
+            self.game.switch_scene("ModeSelect")
 
     def update(self, dt):
         self.blink_timer += dt

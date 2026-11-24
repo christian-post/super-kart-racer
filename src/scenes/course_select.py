@@ -18,7 +18,7 @@ class CourseSelect(Scene):
         if event.type != pg.KEYDOWN:
             return
         if event.key == pg.K_ESCAPE:
-            self.game.switch_scene("TitleScreen")
+            self.game.switch_scene("ModeSelect")
         elif not self.courses:
             return
         elif event.key in (pg.K_w, pg.K_UP):

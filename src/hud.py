@@ -1,6 +1,7 @@
 import pygame as pg
 
 from src.sprites import Kart
+from src.game_mode import GameMode
 
 vec = pg.math.Vector2
 
@@ -36,6 +37,8 @@ class HUD:
         self.MARGIN = game.config["Hud.margin"]
         self.last_lap_time = None
         self.lap_time_until = 0  # pg.time.get_ticks() timestamp
+        self.best_lap_time = None
+        self.lap_time_delta = None  # last lap minus previous best, time trial only
         item_frame_size = game.config["Hud.item_frame_size"]
         self.item_frame = pg.Surface((item_frame_size, item_frame_size), pg.SRCALPHA)
         self.item_frame.fill((0, 0, 0, 110))
@@ -45,6 +48,10 @@ class HUD:
         if event.type == LAP_COMPLETED:
             self.last_lap_time = event.lap_time
             self.lap_time_until = pg.time.get_ticks() + self.game.config["Hud.lap_time_showing_duration"] * 1000
+            if self.best_lap_time is not None and self.race.mode == GameMode.TIME_TRIAL:
+                self.lap_time_delta = event.lap_time - self.best_lap_time
+            if self.best_lap_time is None or event.lap_time < self.best_lap_time:
+                self.best_lap_time = event.lap_time
 
 
     @staticmethod
@@ -53,11 +60,11 @@ class HUD:
         return f"{int(m):02d}:{s:05.2f}"
 
 
-    def draw_text(self, screen, text, pos, anchor="topright", font=None):
+    def draw_text(self, screen, text, pos, anchor="topright", font=None, color=(255, 255, 255)):
         # no antialiasing to keep hard pixel edges
         font = font or self.font
         shadow = font.render(text, False, (0, 0, 0))
-        surf = font.render(text, False, (255, 255, 255))
+        surf = font.render(text, False, color)
         rect = surf.get_rect(**{anchor: pos})
         screen.blit(shadow, rect.move(1, 1))
         screen.blit(surf, rect)
@@ -74,9 +81,16 @@ class HUD:
                            (right, self.MARGIN))
 
         # last lap time, shown briefly after finishing a lap
+        # also show the time difference if in Time Trial mode
         if self.last_lap_time is not None and pg.time.get_ticks() < self.lap_time_until:
-            self.draw_text(screen, f"LAP {self.format_time(self.last_lap_time)}",
-                           (right, r.bottom))
+            lap_rect = self.draw_text(screen, f"LAP {self.format_time(self.last_lap_time)}",
+                                      (right, r.bottom))
+            # difference to the fastest previous lap, green if faster
+            if self.lap_time_delta is not None:
+                color = (80, 230, 60) if self.lap_time_delta <= 0 else (255, 60, 60)
+                sign = "-" if self.lap_time_delta < 0 else "+"
+                self.draw_text(screen, f"{sign}{self.format_time(abs(self.lap_time_delta))}",
+                               (right, lap_rect.bottom), color=color)
 
 
     def draw_speedometer(self, screen):
@@ -235,9 +249,11 @@ class HUD:
 
     def draw(self, screen):
         self.draw_lap_and_time(screen)
-        self.draw_item(screen)
+        if self.race.mode.has_items:
+            self.draw_item(screen)
         self.draw_speedometer(screen)
         self.draw_minimap(screen)
-        self.draw_position(screen)
-        for rival, gap in self.find_rivals_behind():
-            self.draw_rival_warning(screen, rival, gap)
+        if self.race.mode.has_opponents:
+            self.draw_position(screen)
+            for rival, gap in self.find_rivals_behind():
+                self.draw_rival_warning(screen, rival, gap)

@@ -4,6 +4,7 @@ import pygame as pg
 
 from src.scenes import SCENES
 from src.config import Config
+from src.game_mode import GameMode
 
 vec = pg.math.Vector2
 
@@ -66,6 +67,7 @@ class Game:
         self.map = None
         self.shrink_effects = None
         self.started = False  # if the race has started (starts after green light)
+        self.mode = GameMode.SINGLE_RACE  # set by the ModeSelect scene
 
         # scene stack: top scene gets events/updates,
         # transparent scenes also draw the scene below them
